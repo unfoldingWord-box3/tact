@@ -1,15 +1,25 @@
 // tests/aligner.js
 var chai = require('chai');
 var assert = chai.assert;
-var corpusFaker = require('./../src/corpusFaker.js');
 var wordAligner = require('./../src/wordAligner.js');
 var natural = require('natural');
 var tokenizer = new natural.WordTokenizer();
-var ngrams = natural.NGrams;
 
-var lexicon = corpusFaker.lexicon(1);
-var pairForAlignment = corpusFaker.lexiconSentencePair(1, lexicon);
-var corpus = corpusFaker.lexiconCorpusGenerate(1, lexicon);
+function reverse(s) {
+  return s.split('').reverse().join('');
+}
+
+var sources = [
+  "hello", "hello george", "hello taco", "hello all", "say hello", "no hello", "say hello to all",
+  "world", "the world", "world reign", "save the world", "world of worlds", "king of the world", "hello to the world",
+  "taco", "taco tuesdays", "i like tacos", "tacos taste good", "why tacos"
+];
+var targets = [];
+sources.forEach(function(string, index){ targets.push(reverse(string)); });
+var corpus = [];
+sources.forEach(function(string, index){ corpus.push([string, targets[index]]); });
+var pairForAlignment = ["hello taco world", "dlrow ocat olleh"];
+
 var table = wordAligner.tableGenerate(corpus);
 
 describe('wordAligner.tableGenerate', function() {
@@ -27,8 +37,13 @@ describe('wordAligner.tableGenerate', function() {
 });
 
 describe('wordAligner.align', function() {
+  var alignmentData = wordAligner.align(pairForAlignment, table);
+  console.log(alignmentData);
+  it('align should return an array for each source word', function(){
+    var count = tokenizer.tokenize(pairForAlignment[0]).length;
+    assert.equal(count, alignmentData.length);
+  });
   it('align should return an object of which values are an array of string and number.', function() {
-    var alignmentData = wordAligner.align(pairForAlignment, table);
     var alignment = alignmentData[0];
     assert.isArray(alignment);
     var sourceNgram = alignment[0];
