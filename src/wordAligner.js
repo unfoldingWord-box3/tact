@@ -54,7 +54,7 @@ var tableGenerate = function(trainingSet) {
   trainingSet.forEach(function(pair, index) {
     var source = pair[0];
     var target = pair[1];
-    var sourceArray = ngram(source, n);
+    var sourceArray = ngram(source, 1);
     var targetArray = ngram(target, n);
     sourceArray.forEach(function(sourceNgram, index) {
       if (table[sourceNgram] === undefined) {
@@ -73,8 +73,12 @@ var tableGenerate = function(trainingSet) {
   return table;
 };
 
-var alignmentData = function(sourceNgramArray, targetNgramArray, table) {
+var alignmentData = function(sourceString, targetString, table) {
   var _alignmentData = [];
+
+  var sourceNgramArray = ngram(sourceString, 1);
+  var targetNgramArray = ngram(targetString, n);
+
   sourceNgramArray.forEach(function(sourceNgram, index){
     var alignmentsPerSource = [];
     var total = 0;
@@ -95,7 +99,7 @@ var alignmentData = function(sourceNgramArray, targetNgramArray, table) {
       alignmentObject.total = total;
       var ratio = alignmentObject.times / total;
       alignmentObject.ratio = ratio;
-      alignmentObject = score(sourceNgramArray, targetNgramArray, alignmentObject);
+      alignmentObject = score(sourceString, targetString, sourceNgramArray, targetNgramArray, alignmentObject);
       _alignmentData.push(alignmentObject);
     });
   });
@@ -104,23 +108,44 @@ var alignmentData = function(sourceNgramArray, targetNgramArray, table) {
 }
 
 // score the alignmentObject based on the criteria such as ngram length
-var score = function(sourceNgramArray, targetNgramArray, alignmentObject) {
-  var boostNgramCount = 0.25;
-  var boostMatchCount = 2;
+var score = function(sourceString, targetString, sourceNgramArray, targetNgramArray, alignmentObject) {
+  var boostNgramCount = 0.5; // anything over 0 is increasing
+  var boostMatchCount = 1.5; // anything over 1 is increasing
+  var boostMatchOrder = 2; // anything over 1 is increasing
 
-  var sourceNgramCount = tokenizer.tokenize(alignmentObject.sourceNgram).length;
-  var targetNgramCount = tokenizer.tokenize(alignmentObject.targetNgram).length;
+  var sourceNgram = alignmentObject.sourceNgram;
+  var targetNgram = alignmentObject.targetNgram;
+
+  // favor phrases over words
+  var sourceNgramCount = tokenizer.tokenize(sourceNgram).length;
+  var targetNgramCount = tokenizer.tokenize(targetNgram).length;
   var boostSourceNgram = Math.pow(sourceNgramCount, boostNgramCount);
   var boostTargetNgram = Math.pow(targetNgramCount, boostNgramCount);
 
-  var sourceMatchCount = countInArray(sourceNgramArray, alignmentObject.sourceNgram);
-  var targetMatchCount = countInArray(targetNgramArray, alignmentObject.targetNgram);
+  // favor words/phrases that occur same number of times in source and target
+  var sourceMatchCount = countInArray(sourceNgramArray, sourceNgram);
+  var targetMatchCount = countInArray(targetNgramArray, targetNgram);
   if (sourceMatchCount != targetMatchCount) {
     boostMatchCount = 1;
   }
 
+  // favor words/phrases that occur in the same place in the sentence
+  var sourceLength = sourceString.length;
+  var targetLength = targetString.length;
+  var sourcePosition = sourceString.indexOf(sourceNgram);
+  var targetPosition = targetString.indexOf(targetNgram);
+  var sourceRatio = sourcePosition / sourceLength;
+  var targetRatio = targetPosition / targetLength;
+  if (sourceRatio > 0 && targetRatio > 0) {
+    var deltaRatio = Math.abs(sourceRatio - targetRatio);
+    boostMatchOrder = (1 - deltaRatio) * boostMatchRatio;
+    // console.log(boostMatchOrder);
+  } else {
+    boostMatchRatio = 1
+  }
+
   var ratio = alignmentObject.ratio;
-  var score = ratio * boostSourceNgram * boostTargetNgram * boostMatchCount;
+  var score = ratio * boostSourceNgram * boostTargetNgram * boostMatchCount * boostMatchOrder;
   alignmentObject.score = score;
   return alignmentObject;
 }
@@ -154,6 +179,18 @@ var isConflict = function(alignmentObjectA, alignmentObjectB) {
   return conflict;
 }
 
+// not useful now but the start of an alternate approach if not based on removing all conflicts to end the loop
+var penalizeConflictingAlignments = function(alignmentObject, available) {
+  var penalty = 2;
+  available.forEach(function(_alignmentObject, index) {
+    var conflict = isConflict(alignmentObject, _alignmentObject)
+    if (conflict) {
+      _alignmentObject.score = _alignmentObject.score / penalty;
+    }
+  });
+  return available;
+}
+
 var removeConflictingAlignments = function(alignmentObject, _available) {
   var available = _available.slice(0);
   available.forEach(function(_alignmentObject, index) {
@@ -173,19 +210,72 @@ var bestAlignment = function(_alignmentData) {
   return alignmentObject;
 }
 
+// sourceTokens = [tokens...]
+// alignment = [sourceNgram, targetNgram, score]
+// this function could be optimized by passing in alignment as an object instead of array
+var alignmentBySourceTokens = function(_sourceTokens, alignment) {
+  sourceTokens = _sourceTokens.slice(0);
+  var orderedAlignment = []; // response
+
+  // transform alignment into object to look up ngrams
+  unorderedAlignment = {};
+  alignment.forEach(function(alignmentObject, index) {
+    unorderedAlignment[alignmentObject[0]] = alignmentObject;
+  });
+
+  // build queue of tokens to look up
+  var queue = [];
+  var found;
+  var notfound = [];
+  while (sourceTokens.length > 0) {
+    // Start with source string tokens and look up one by one
+    // Some tokens may be conjoined with next token if not found
+    queue.push(sourceTokens.shift());
+    // Look up alignment from generated unordered alignment
+    found = unorderedAlignment[queue.join(' ')];
+    // see if queue is found and push to orderedAlignment array
+    if (found != undefined) {
+      // Push each found alignment in order found to response array
+      orderedAlignment.push(found);
+      queue = [];
+    } else {
+      if (queue.length == n) {
+        // since this one can't be found remove the first token and move on
+        notfound.push(queue.shift());
+        // put back remaining tokens to be queued in next loop
+        while (queue.length > 0) {
+          sourceTokens.unshift(queue.pop());
+        }
+      }
+    }
+  }
+  // console.log("unorderedAlignment: ", unorderedAlignment);
+  // console.log("SourceTokens: ", sourceTokens);
+  // console.log("orderedAlignment: ", orderedAlignment);
+  // console.log("queue: ", queue);
+  if (notfound.length > 0) console.log("notfound: ", notfound);
+  // console.log("found: ", found);
+  // console.log("n: ", n);
+
+  // Potentially re-align remaining tokens not already aligned
+  return orderedAlignment;
+}
+
 var align = function(pairForAlignment, table) {
   var alignment; // response
   var sourceString = pairForAlignment[0];
   var targetString = pairForAlignment[1];
-  var sourceNgramArray = ngram(sourceString, n);
-  var targetNgramArray = ngram(targetString, n);
 
-  var _alignmentData = alignmentData(sourceNgramArray, targetNgramArray, table);
+  var _alignmentData = alignmentData(sourceString, targetString, table);
   alignment = bestAlignments(sourceString, targetString, _alignmentData);
   // process of elimination
     // align words/phrases found in userLexicon
     // align words/phrases found in keywordLexicon
     // build statisticalLexicon from remaining ngrams.
+
+  // reorder alignments to match source order
+  alignment = alignmentBySourceTokens(tokenizer.tokenize(sourceString), alignment);
+
   return alignment;
 };
 
