@@ -46,11 +46,15 @@ var table = wordAligner.tableGenerate(corpus);
 console.timeEnd('table');
 
 console.time('alignment');
-var alignmentPairs = corpus.slice(0).splice(1,10)
+var alignmentPairs = corpus.slice(0).splice(1,100);
+var alignmentPairsOutput = [];
 alignmentPairs.forEach(function(alignmentPair) {
   console.log("\n\n\tSource: ", alignmentPair[0]);
   console.log("\n\tTarget: ", alignmentPair[1]);
   var alignment = wordAligner.align(alignmentPair, table);
   console.log("\n\tAlignment:\n", alignment);
+  alignmentPairsOutput.push(alignment);
 });
 console.timeEnd('alignment');
+
+console.log("\n\tAll Alignment Output:\n", alignmentPairsOutput);
