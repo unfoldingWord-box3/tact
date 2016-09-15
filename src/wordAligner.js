@@ -4,7 +4,7 @@ var nonUnicodeLetter = XRegExp('\\PL');
 var tokenizer = new natural.RegexpTokenizer({pattern: nonUnicodeLetter});
 var ngrams = natural.NGrams;
 
-var n = 2;
+var n = 4;
 
 function forObject(object, callback) {
   return Object.keys(object).map(function (key) {
@@ -109,8 +109,8 @@ var alignmentData = function(sourceString, targetString, table) {
 
 // score the alignmentObject based on the criteria such as ngram length
 var score = function(sourceString, targetString, sourceNgramArray, targetNgramArray, alignmentObject) {
-  var boostNgramCount = 0.5; // anything over 0 is increasing
-  var boostMatchCount = 1.5; // anything over 1 is increasing
+  var boostNgramCount = 1; // anything over 1 is increasing
+  var boostMatchCount = 0.5; // anything over 1 is increasing
   var boostMatchOrder = 2; // anything over 1 is increasing
 
   var sourceNgram = alignmentObject.sourceNgram;
@@ -119,15 +119,18 @@ var score = function(sourceString, targetString, sourceNgramArray, targetNgramAr
   // favor phrases over words
   var sourceNgramCount = tokenizer.tokenize(sourceNgram).length;
   var targetNgramCount = tokenizer.tokenize(targetNgram).length;
-  var boostSourceNgram = Math.pow(sourceNgramCount, boostNgramCount);
-  var boostTargetNgram = Math.pow(targetNgramCount, boostNgramCount);
+  // var boostSourceNgram = Math.pow(boostNgramCount, sourceNgramCount);
+  if (targetNgramCount == 1) boostTargetNgram = 1.1;
+  if (targetNgramCount == 2) boostTargetNgram = 2;
+  if (targetNgramCount == 3) boostTargetNgram = 1.5;
+  if (targetNgramCount == 4) boostTargetNgram = 1.3;
+  // boostTargetNgram = (1-(1/(targetNgramCount+1))) + 0.5;
 
   // favor words/phrases that occur same number of times in source and target
   var sourceMatchCount = countInArray(sourceNgramArray, sourceNgram);
   var targetMatchCount = countInArray(targetNgramArray, targetNgram);
-  if (sourceMatchCount != targetMatchCount) {
-    boostMatchCount = 1;
-  }
+  var deltaCount = Math.abs(sourceMatchCount - targetMatchCount);
+  boostMatchCount = Math.pow( (1/(deltaCount+1)), boostMatchCount);
 
   // favor words/phrases that occur in the same place in the sentence
   var sourceLength = sourceString.length;
@@ -136,16 +139,11 @@ var score = function(sourceString, targetString, sourceNgramArray, targetNgramAr
   var targetPosition = targetString.indexOf(targetNgram);
   var sourceRatio = sourcePosition / sourceLength;
   var targetRatio = targetPosition / targetLength;
-  if (sourceRatio > 0 && targetRatio > 0) {
-    var deltaRatio = Math.abs(sourceRatio - targetRatio);
-    boostMatchOrder = (1 - deltaRatio) * boostMatchRatio;
-    // console.log(boostMatchOrder);
-  } else {
-    boostMatchRatio = 1
-  }
+  var deltaRatio = Math.abs(sourceRatio - targetRatio);
+  boostMatchOrder = Math.pow((1 - deltaRatio), boostMatchOrder);
 
   var ratio = alignmentObject.ratio;
-  var score = ratio * boostSourceNgram * boostTargetNgram * boostMatchCount * boostMatchOrder;
+  var score = ratio * boostTargetNgram * boostMatchCount * boostMatchOrder;
   alignmentObject.score = score;
   return alignmentObject;
 }
