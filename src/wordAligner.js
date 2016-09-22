@@ -1,10 +1,31 @@
 var natural = require('natural');
 var XRegExp = require('xregexp');
-var nonUnicodeLetter = XRegExp('\\PL');
+var nonUnicodeLetter = XRegExp('\\PL+');
+// var nonUnicodeLetter = XRegExp('[^\\pL]+');
 var tokenizer = new natural.RegexpTokenizer({pattern: nonUnicodeLetter});
 var ngrams = natural.NGrams;
 
 var n = 4;
+
+var weights = {
+  tableRatios: 60,
+  sourceUniqueness: 40,
+  targetUniqueness: 0,
+  longerNgrams: 10,
+  occurrenceDelta: 10,
+  positionDelta: 50,
+  conflict: 500
+}
+
+function sum( obj ) {
+  var sum = 0;
+  for( var el in obj ) {
+    if( obj.hasOwnProperty( el ) ) {
+      sum += parseFloat( obj[el] );
+    }
+  }
+  return sum;
+}
 
 function forObject(object, callback) {
   return Object.keys(object).map(function (key) {
@@ -47,8 +68,9 @@ var ngram = function(string, n) {
   return ngramArray;
 }
 
-var tableGenerate = function(trainingSet) {
-  var table = {}; // response
+// can pass in table so that it can incriment counts
+var tableGenerate = function(trainingSet, table) {
+  if (table == undefined) var table = {}; // response
   // loop through trainingSet
   // generate ngrams of source and target
   trainingSet.forEach(function(pair, index) {
@@ -81,9 +103,11 @@ var alignmentData = function(sourceString, targetString, table) {
 
   sourceNgramArray.forEach(function(sourceNgram, index){
     var alignmentsPerSource = [];
-    var total = 0;
+    var total = 0; // rename to filtered
+    var sourceNgramTotal = 0;
     if (table[sourceNgram] !== undefined) {
       forObject(table[sourceNgram], function(targetNgram, times){
+        sourceNgramTotal = sourceNgramTotal + times;
         if (targetNgramArray.indexOf(targetNgram) > -1) {
           total = total + times;
           var alignmentObject = {
@@ -99,6 +123,9 @@ var alignmentData = function(sourceString, targetString, table) {
       alignmentObject.total = total;
       var ratio = alignmentObject.times / total;
       alignmentObject.ratio = ratio;
+      alignmentObject.sourceUniqueness = total/sourceNgramTotal;
+      alignmentObject.conflict = false;
+      alignmentObject.sourceUsed = false;
       alignmentObject = score(sourceString, targetString, sourceNgramArray, targetNgramArray, alignmentObject);
       _alignmentData.push(alignmentObject);
     });
@@ -109,9 +136,7 @@ var alignmentData = function(sourceString, targetString, table) {
 
 // score the alignmentObject based on the criteria such as ngram length
 var score = function(sourceString, targetString, sourceNgramArray, targetNgramArray, alignmentObject) {
-  var boostNgramCount = 1; // anything over 1 is increasing
-  var boostMatchCount = 0.5; // anything over 1 is increasing
-  var boostMatchOrder = 2; // anything over 1 is increasing
+  var longerNgramScore, occurrenceDeltaScore, positionDeltaScore;
 
   var sourceNgram = alignmentObject.sourceNgram;
   var targetNgram = alignmentObject.targetNgram;
@@ -120,17 +145,17 @@ var score = function(sourceString, targetString, sourceNgramArray, targetNgramAr
   var sourceNgramCount = tokenizer.tokenize(sourceNgram).length;
   var targetNgramCount = tokenizer.tokenize(targetNgram).length;
   // var boostSourceNgram = Math.pow(boostNgramCount, sourceNgramCount);
-  if (targetNgramCount == 1) boostTargetNgram = 1.1;
-  if (targetNgramCount == 2) boostTargetNgram = 2;
-  if (targetNgramCount == 3) boostTargetNgram = 1.5;
-  if (targetNgramCount == 4) boostTargetNgram = 1.3;
-  // boostTargetNgram = (1-(1/(targetNgramCount+1))) + 0.5;
+  // longerNgramScore = 1.1 - (targetNgramCount/10)
+  if (targetNgramCount == 1) longerNgramScore = 0.8;
+  if (targetNgramCount == 2) longerNgramScore = 1;
+  if (targetNgramCount == 3) longerNgramScore = 0.7;
+  if (targetNgramCount == 4) longerNgramScore = 0.6;
 
   // favor words/phrases that occur same number of times in source and target
   var sourceMatchCount = countInArray(sourceNgramArray, sourceNgram);
   var targetMatchCount = countInArray(targetNgramArray, targetNgram);
   var deltaCount = Math.abs(sourceMatchCount - targetMatchCount);
-  boostMatchCount = Math.pow( (1/(deltaCount+1)), boostMatchCount);
+  occurrenceDeltaScore = 1/(deltaCount+1);
 
   // favor words/phrases that occur in the same place in the sentence
   var sourceLength = sourceString.length;
@@ -140,71 +165,76 @@ var score = function(sourceString, targetString, sourceNgramArray, targetNgramAr
   var sourceRatio = sourcePosition / sourceLength;
   var targetRatio = targetPosition / targetLength;
   var deltaRatio = Math.abs(sourceRatio - targetRatio);
-  boostMatchOrder = Math.pow((1 - deltaRatio), boostMatchOrder);
+  positionDeltaScore = (1 - deltaRatio);
 
   var ratio = alignmentObject.ratio;
-  var score = ratio * boostTargetNgram * boostMatchCount * boostMatchOrder;
-  alignmentObject.score = score;
+  var sourceUniqueness = alignmentObject.sourceUniqueness;
+  var weightSum = sum(weights) - weights.conflict;
+  var score = (
+    weights.tableRatios * ratio +
+    weights.sourceUniqueness * sourceUniqueness +
+    weights.longerNgrams * longerNgramScore +
+    weights.occurrenceDelta * occurrenceDeltaScore +
+    weights.positionDelta * positionDeltaScore
+  ) / weightSum;
+  alignmentObject.score = Math.round( score * 1000) / 1000;
   return alignmentObject;
 }
 
 // determine the combination of best alignmentObjects for highest combined score
 var bestAlignments = function(sourceString, targetString, _alignmentData) {
   var alignment = []; // response
+  var neededSource = tokenizer.tokenize(sourceString).join('  ');
   var available = _alignmentData.slice(0);
   available.sort(function(a,b) {
     return b.score - a.score;
   });
-  do { // use all words
+
+  do { // use all source words
     var best = bestAlignment(available);
-    available = removeConflictingAlignments(best, available);
-    var bestPair = [best.sourceNgram, best.targetNgram, Math.round( best.score * 1000) / 1000]
-    alignment.push(bestPair);
-  } while (available.length > 0);
+    var regex = new RegExp("( |^)+?" + best.sourceNgram + "( |$)+?", 'g');
+    if (best != undefined && neededSource.match(regex) != null) {
+      available = penalizeConflictingAlignments(best, available);
+      var bestPair = [best.sourceNgram, best.targetNgram, best.score]
+      alignment.push(bestPair);
+      neededSource = neededSource.split(regex).join(' ');
+      console.log('bestPair', bestPair);
+      console.log('neededSource', neededSource);
+    }
+  } while (available.length > 0 && tokenizer.tokenize(neededSource).length > 0);
+
   return alignment;
 }
 
 var isConflict = function(alignmentObjectA, alignmentObjectB) {
   var conflict = false; // response
-  var sourceWordsA = tokenizer.tokenize(alignmentObjectA.sourceNgram);
+  // var sourceWordsA = tokenizer.tokenize(alignmentObjectA.sourceNgram);
+  // var sourceWordsB = tokenizer.tokenize(alignmentObjectB.sourceNgram);
+  // sourceCommon = arrayIntersect(sourceWordsA, sourceWordsB);
+  // if (sourceCommon.length > 0) { conflict = true; }
   var targetWordsA = tokenizer.tokenize(alignmentObjectA.targetNgram);
-  var sourceWordsB = tokenizer.tokenize(alignmentObjectB.sourceNgram);
   var targetWordsB = tokenizer.tokenize(alignmentObjectB.targetNgram);
-  sourceCommon = arrayIntersect(sourceWordsA, sourceWordsB);
   targetCommon = arrayIntersect(targetWordsA, targetWordsB);
-  if (sourceCommon.length > 0) { conflict = true; }
   if (targetCommon.length > 0) { conflict = true; }
   return conflict;
 }
 
-// not useful now but the start of an alternate approach if not based on removing all conflicts to end the loop
 var penalizeConflictingAlignments = function(alignmentObject, available) {
-  var penalty = 2;
   available.forEach(function(_alignmentObject, index) {
     var conflict = isConflict(alignmentObject, _alignmentObject)
     if (conflict) {
-      _alignmentObject.score = _alignmentObject.score / penalty;
+      available[index].conflict = true;
+      var weightSum = sum(weights);
+      newScore = alignmentObject.score * Math.pow(( (weightSum - weights.conflict)/weightSum ), 2);
+      available[index].score = Math.round( newScore * 1000) / 1000
     }
   });
   return available;
 }
 
-var removeConflictingAlignments = function(alignmentObject, _available) {
-  var available = _available.slice(0);
-  available.forEach(function(_alignmentObject, index) {
-    var conflict = isConflict(alignmentObject, _alignmentObject)
-    if (conflict) {
-      var currentRoamingIndex = _available.indexOf(_alignmentObject);
-      _available.splice(currentRoamingIndex, 1);
-    }
-  });
-  return _available;
-}
-
 // determine the best single alignmentObject
-var bestAlignment = function(_alignmentData) {
-  var alignmentObject;
-  alignmentObject = _alignmentData[0];
+var bestAlignment = function(alignmentData) {
+  var alignmentObject = alignmentData.shift();
   return alignmentObject;
 }
 
