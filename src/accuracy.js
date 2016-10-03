@@ -1,7 +1,6 @@
+var wordAligner = require('./../src/wordAligner.js');
 var natural = require('natural');
 var XRegExp = require('xregexp');
-var corpusFaker = require('./src/corpusFaker.js');
-var wordAligner = require('./src/wordAligner.js');
 
 var nonUnicodeLetter = XRegExp('\\PL');
 var tokenizer = new natural.RegexpTokenizer({pattern: nonUnicodeLetter});
@@ -28,33 +27,38 @@ function normalizePolytonicGreek(text) {
   return text;
 }
 
-console.time('corpus');
-var greekArray = lineArray('./tests/fixtures/greekToEnglish/greek.txt');
-var englishArray = lineArray('./tests/fixtures/greekToEnglish/english.txt');
-var corpus = [];
-greekArray.forEach(function(greekString, index) {
-  var englishString = englishArray[index];
-  corpus[index] = [normalizePolytonicGreek(greekString).toLowerCase(), englishString.toLowerCase()];
-});
-greekArray = [];
-englishArray = [];
-console.timeEnd('corpus');
+function compare() {
+  // corpus
+  console.time('corpus');
+    var greekArray = lineArray('./tests/fixtures/greekToEnglish/greek.txt');
+    var englishArray = lineArray('./tests/fixtures/greekToEnglish/english.txt');
+    var corpus = [];
+    greekArray.forEach(function(greekString, index) {
+      var englishString = englishArray[index];
+      corpus[index] = [normalizePolytonicGreek(greekString).toLowerCase(), englishString.toLowerCase()];
+    });
+    greekArray = [];
+    englishArray = [];
+  console.timeEnd('corpus');
 
-console.time('table');
-var table = wordAligner.tableGenerate(corpus);
-// console.log("\n\n\tTable:\n\n", table);
-console.timeEnd('table');
+  // build table from corpus
+  console.time('table');
+    var table = wordAligner.tableGenerate(corpus);
+    // console.log("\n\n\tTable:\n\n", table);
+  console.timeEnd('table');
 
-console.time('alignment');
-var alignmentPairs = corpus.slice(0).splice(1,10);
-var alignmentPairsOutput = [];
-alignmentPairs.forEach(function(alignmentPair) {
-  console.log("\n\n\tSource: ", alignmentPair[0]);
-  console.log("\n\tTarget: ", alignmentPair[1]);
-  var alignment = wordAligner.align(alignmentPair, table);
-  console.log("\n\tAlignment:\n", alignment);
-  alignmentPairsOutput.push(alignment);
-});
-console.timeEnd('alignment');
+  // pair for alignment
+  var source = normalizePolytonicGreek("Βίβλος γενέσεως Ἰησοῦ Χριστοῦ υἱοῦ Δαυὶδ υἱοῦ Ἀβραάμ.").toLowerCase();
+  var target = "The book of the genealogy of Jesus Christ, son of David, son of Abraham:".toLowerCase();
+  var pairForAlignment = [source, target];
 
-console.log("\n\tAll Alignment Output:\n", alignmentPairsOutput);
+  // run alignment for each line
+  var alignment = wordAligner.align(pairForAlignment, table);
+  console.log(alignment);
+  // compare each line of alignment to the manual alignment
+  var answer = [["Βίβλος","The book"],["γενέσεως","of the genealogy"],["Ἰησοῦ","of Jesus"],["Χριστοῦ","Christ"],["υἱοῦ","son"],["Δαυὶδ","of David"],["υἱοῦ","son"],["Ἀβραάμ","of Abraham"]]
+  console.log(answer);
+
+}
+
+compare();

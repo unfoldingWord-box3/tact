@@ -186,11 +186,11 @@ var bestAlignments = function(sourceString, targetString, _alignmentData) {
   var alignment = []; // response
   var neededSource = tokenizer.tokenize(sourceString).join('  ');
   var available = _alignmentData.slice(0);
-  available.sort(function(a,b) {
-    return b.score - a.score;
-  });
 
   do { // use all source words
+    available.sort(function(a,b) {
+      return b.score - a.score;
+    });
     var best = bestAlignment(available);
     var regex = new RegExp("( |^)+?" + best.sourceNgram + "( |$)+?", 'g');
     if (best != undefined && neededSource.match(regex) != null) {
