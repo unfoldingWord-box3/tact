@@ -145,10 +145,10 @@ var score = function(sourceString, targetString, sourceNgramArray, targetNgramAr
   var targetNgramCount = tokenizer.tokenize(targetNgram).length;
   // var boostSourceNgram = Math.pow(boostNgramCount, sourceNgramCount);
   // longerNgramScore = 1.1 - (targetNgramCount/10)
-  if (targetNgramCount == 1) longerNgramScore = 0.8;
-  if (targetNgramCount == 2) longerNgramScore = 1;
-  if (targetNgramCount == 3) longerNgramScore = 0.7;
-  if (targetNgramCount == 4) longerNgramScore = 0.6;
+  if (targetNgramCount == 1) longerNgramScore = 0.9;
+  if (targetNgramCount == 2) longerNgramScore = 1.0;
+  if (targetNgramCount == 3) longerNgramScore = 0.8;
+  if (targetNgramCount == 4) longerNgramScore = 0.7;
 
   // favor words/phrases that occur same number of times in source and target
   var sourceMatchCount = countInArray(sourceNgramArray, sourceNgram);
