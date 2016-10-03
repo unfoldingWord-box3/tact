@@ -34,16 +34,15 @@ function forObject(object, callback) {
 }
 
 function arrayIntersect(a, b) {
-  var ai=0, bi=0;
-  var result = [];
-  while( ai < a.length && bi < b.length )
-  {
-     if      (a[ai] < b[bi] ){ ai++; }
-     else if (a[ai] > b[bi] ){ bi++; }
-     else /* they're equal */
-     { result.push(a[ai]); ai++; bi++; }
+  var d = {};
+  var results = [];
+  for (var i = 0; i < b.length; i++) {
+    d[b[i]] = true;
   }
-  return result;
+  for (var j = 0; j < a.length; j++) {
+    if (d[a[j]]) results.push(a[j]);
+  }
+  return results;
 }
 
 function countInArray(array, item) {
