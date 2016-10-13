@@ -1,6 +1,7 @@
 // tests/aligner.js
 var chai = require('chai');
 var assert = chai.assert;
+var table = require('./../src/table.js');
 var wordAligner = require('./../src/wordAligner.js');
 var natural = require('natural');
 var tokenizer = new natural.WordTokenizer();
@@ -20,7 +21,7 @@ var corpus = [];
 sources.forEach(function(string, index){ corpus.push([string, targets[index]]); });
 var pairForAlignment = ["hello taco world", "dlrow ocat olleh"];
 
-var table = wordAligner.tableGenerate(corpus);
+var table = table.generate(corpus);
 
 describe('wordAligner.tableGenerate', function() {
   it('tableGenerate should return an object of which values are objects and its values are numbers.', function() {

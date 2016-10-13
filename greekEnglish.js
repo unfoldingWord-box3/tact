@@ -1,6 +1,6 @@
 var natural = require('natural');
 var XRegExp = require('xregexp');
-var corpusFaker = require('./src/corpusFaker.js');
+var table = require('./src/table.js');
 var wordAligner = require('./src/wordAligner.js');
 
 var nonUnicodeLetter = XRegExp('\\PL');
@@ -34,6 +34,7 @@ var englishArray = lineArray('./tests/fixtures/greekToEnglish/english.txt');
 var corpus = [];
 greekArray.forEach(function(greekString, index) {
   var englishString = englishArray[index];
+
   corpus[index] = [normalizePolytonicGreek(greekString).toLowerCase(), englishString.toLowerCase()];
 });
 greekArray = [];
@@ -41,7 +42,7 @@ englishArray = [];
 console.timeEnd('corpus');
 
 console.time('table');
-var table = wordAligner.tableGenerate(corpus);
+var table = table.generate(corpus);
 // console.log("\n\n\tTable:\n\n", table);
 console.timeEnd('table');
 
