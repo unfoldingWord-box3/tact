@@ -1,6 +1,6 @@
 TACT (Translation Alignment Correction Tool)
 ===
-node.js based statistical aligner.
+node.js based nlp statistical word/phrase aligner.
 
 Scope
 ---
