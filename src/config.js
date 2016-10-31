@@ -1,10 +1,18 @@
 
 exports.ngrams = {
-  sourceMax: 1,
-  targetMax: 4,
-  sourceScores: [0, 1.0, 0.5], //[0,1,2]
+  sourceMax: 2,
+  targetMax: 3,
+  sourceScores: [0, 1.0, 0.9], //[0,1,2]
   targetScores: [0, 0.9, 1.0, 0.8, 0.7] //[0,1,2,3,4]
 };
+
+exports.penalties = {
+  conflict: 10
+}
+
+exports.bonus = {
+  correction: 1.0
+}
 
 exports.weights = {
   tableRatios: 10,
@@ -13,6 +21,5 @@ exports.weights = {
   longerNgrams: 3,
   occurrenceDelta: 2,
   positionDelta: 4,
-  sizeDelta: 5,
-  conflict: 100
+  sizeDelta: 5
 };

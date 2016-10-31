@@ -60,7 +60,7 @@ exports.score = function(sourceString, targetString, sourceNgramArray, targetNgr
   var sourceNgram = alignmentObject.sourceNgram;
   var targetNgram = alignmentObject.targetNgram;
 
-  var weightSum = tools.sum(config.weights) - config.weights.conflict;
+  var weightSum = tools.sum(config.weights);
   var score = (
     config.weights.tableRatios * alignmentObject.ratio +
     config.weights.sourceUniqueness * alignmentObject.sourceUniqueness +
@@ -69,6 +69,9 @@ exports.score = function(sourceString, targetString, sourceNgramArray, targetNgr
     config.weights.positionDelta * positionDeltaScore(sourceNgram, targetNgram, sourceString, targetString) +
     config.weights.sizeDelta * sizeDeltaScore(sourceNgram, targetNgram, sourceString, targetString)
   ) / weightSum;
+  if (alignmentObject.correction == true) {
+    score = score + config.bonus.correction;
+  }
   alignmentObject.score = Math.round( score * 1000) / 1000;
 
   return alignmentObject;

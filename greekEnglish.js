@@ -28,21 +28,34 @@ function normalizePolytonicGreek(text) {
   return text;
 }
 
-console.time('corpus');
-var greekArray = lineArray('./tests/fixtures/greekToEnglish/greek.txt');
-var englishArray = lineArray('./tests/fixtures/greekToEnglish/english.txt');
-var corpus = [];
-greekArray.forEach(function(greekString, index) {
-  var englishString = englishArray[index];
+function parseCorpusFiles(sourceFile, targetFile) {
+  var corpus = [];
+  var greekArray = lineArray(sourceFile);
+  var englishArray = lineArray(targetFile);
+  greekArray.forEach(function(greekString, index) {
+    var englishString = englishArray[index];
+    corpus[index] = [normalizePolytonicGreek(greekString).toLowerCase(), englishString.toLowerCase()];
+  });
+  greekArray = []; englishArray = [];
 
-  corpus[index] = [normalizePolytonicGreek(greekString).toLowerCase(), englishString.toLowerCase()];
-});
-greekArray = [];
-englishArray = [];
+  return corpus;
+}
+
+console.time('corpus');
+// statistical corpus
+var sourceFileCorpus = './tests/fixtures/greekToEnglish/corpus/greek.txt';
+var targetFileCorpus = './tests/fixtures/greekToEnglish/corpus/english.txt';
+corpus = parseCorpusFiles(sourceFileCorpus, targetFileCorpus);
+
+// correctional corpus
+var sourceFileCorrections = './tests/fixtures/greekToEnglish/corrections/greek.txt';
+var targetFileCorrections = './tests/fixtures/greekToEnglish/corrections/english.txt';
+corrections = parseCorpusFiles(sourceFileCorrections, targetFileCorrections);
 console.timeEnd('corpus');
 
 console.time('table');
-var table = table.generate(corpus);
+var corpusTable = table.generate(corpus);
+var correctionsTable = table.generate(corrections, true);
 // console.log("\n\n\tTable:\n\n", table);
 console.timeEnd('table');
 
@@ -52,7 +65,7 @@ var alignmentPairsOutput = [];
 alignmentPairs.forEach(function(alignmentPair) {
   console.log("\n\n\tSource: ", alignmentPair[0]);
   console.log("\n\tTarget: ", alignmentPair[1]);
-  var alignment = wordAligner.align(alignmentPair, table);
+  var alignment = wordAligner.align(alignmentPair, corpusTable, correctionsTable);
   console.log("\n\tAlignment:\n", alignment);
   alignmentPairsOutput.push(alignment);
 });

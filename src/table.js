@@ -9,9 +9,15 @@ var unicodePunctuation = XRegExp("\\s*\\p{P}+\\s*");
 var segmenter = new natural.RegexpTokenizer({pattern: unicodePunctuation});
 var ngrams = natural.NGrams;
 
-var tablePush = function(source, target, table) {
-  var sourceArray = tools.ngram(source, config.ngrams.sourceMax);
-  var targetArray = tools.ngram(target, config.ngrams.targetMax);
+var tablePush = function(source, target, table, isCorrections) {
+  var sourceArray, targetArray;
+  if (isCorrections == true) {
+    sourceArray = [source];
+    targetArray = [target];
+  } else {
+    sourceArray = tools.ngram(source, config.ngrams.sourceMax);
+    targetArray = tools.ngram(target, config.ngrams.targetMax);
+  }
   sourceArray.forEach(function(sourceNgram, index) {
     if (table[sourceNgram] === undefined) {
       table[sourceNgram] = {};
@@ -28,7 +34,7 @@ var tablePush = function(source, target, table) {
 }
 
 // can pass in table so that it can incriment counts
-var generate = function(trainingSet, table) {
+var generate = function(trainingSet, isCorrections, table) {
   if (table == undefined) var table = {}; // response
   // loop through trainingSet
   // generate ngrams of source and target
@@ -40,10 +46,10 @@ var generate = function(trainingSet, table) {
     var targetSegments = segmenter.tokenize(target);
     if (sourceSegments.length == targetSegments.length) {
       sourceSegments.forEach(function(sourceSegment, _index){
-        tablePush(sourceSegment, targetSegments[_index], table);
+        tablePush(sourceSegment, targetSegments[_index], table, isCorrections);
       });
     } else {
-      tablePush(source, target, table);
+      tablePush(source, target, table, isCorrections);
     }
   });
   trainingSet = [];
