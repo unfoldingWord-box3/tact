@@ -35,10 +35,11 @@ var alignmentData = function(sourceString, targetString, table, isCorrections) {
       });
     }
     alignmentsPerSource.forEach(function(alignmentObject) {
+      sourceNgramTokens = tokenizer.tokenize(sourceNgram);
       alignmentObject.total = total;
       var ratio = alignmentObject.times / total;
       alignmentObject.ratio = ratio;
-      alignmentObject.sourceUniqueness = total/sourceNgramTotal;
+      alignmentObject.sourceUniqueness = (total/sourceNgramTotal)/(sourceNgramTokens.length*2);
       alignmentObject.conflict = false;
       alignmentObject.sourceUsed = false;
       alignmentObject.correction = isCorrections;
@@ -54,8 +55,8 @@ var alignmentData = function(sourceString, targetString, table, isCorrections) {
 // determine the combination of best alignmentObjects for highest combined score
 var bestAlignments = function(sourceString, targetString, _alignmentData) {
   var alignment = []; // response
-  var neededSource = tokenizer.tokenize(sourceString).join('  ');
-  var neededTarget = tokenizer.tokenize(targetString).join('  ');
+  var neededSource = tokenizer.tokenize(sourceString).join(' ');
+  var neededTarget = tokenizer.tokenize(targetString).join(' ');
   var available = _alignmentData.slice(0);
 
   do { // use all source words
@@ -65,15 +66,12 @@ var bestAlignments = function(sourceString, targetString, _alignmentData) {
     var best = bestAlignment(available);
     var regexSource = new RegExp("( |^)+?" + best.sourceNgram + "( |$)+?", 'g');
     var regexTarget = new RegExp("( |^)+?" + best.targetNgram + "( |$)+?", 'g');
-    if (best != undefined && neededSource.match(regexSource) != null) {
+    if (best !== undefined && neededSource.match(regexSource) != null) {
       neededSource = neededSource.replace(regexSource, '  ');
       neededTarget = neededTarget.replace(regexTarget, '  ');
       available = penalizeConflictingAlignments(best, available, neededSource, neededTarget);
-      // neededSource = neededSource.split(regex).join(' '); // assumes all source words are the same target words
       var bestPair = [best.sourceNgram, best.targetNgram, best.score]
       alignment.push(bestPair);
-      // console.log('bestPair', bestPair);
-      // console.log('neededSource', neededSource);
     }
   } while (available.length > 0 && tokenizer.tokenize(neededSource).length > 0);
 
@@ -124,23 +122,29 @@ var alignmentBySourceTokens = function(_sourceTokens, alignment) {
   var found;
   var notfound = [];
   while (sourceTokens.length > 0) {
-    // Start with source string tokens and look up one by one
     // Some tokens may be conjoined with next token if not found
-    queue.push(sourceTokens.shift());
-    // Look up alignment from generated unordered alignment
-    found = unorderedAlignment[queue.join(' ')];
-    // see if queue is found and push to orderedAlignment array
-    if (found != undefined) {
-      // Push each found alignment in order found to response array
-      orderedAlignment.push(found);
-      queue = [];
-    } else {
-      if (queue.length == config.ngrams.sourceMax) {
-        // since this one can't be found remove the first token and move on
-        notfound.push(queue.shift());
-        // put back remaining tokens to be queued in next loop
-        while (queue.length > 0) {
-          sourceTokens.unshift(queue.pop());
+    // Need to look for longer ngrams before shorter ones in case both are present
+    var n;
+    for (n = config.ngrams.sourceMax; n > 0; n--) {
+      if (sourceTokens.length > 0) {
+        queue.push(sourceTokens.shift());
+      }
+    }
+    // Start with source string tokens and look up one by one
+    while (queue.length > 0) {
+      // Look up alignment from generated unordered alignment
+      found = unorderedAlignment[queue.join(' ')];
+      // see if queue is found and push to orderedAlignment array
+      if (found !== undefined) {
+        // Push each found alignment in order found to response array
+        orderedAlignment.push(found);
+        queue = [];
+      } else {
+        // since this ngram can't be found remove the last token and move on
+        sourceTokens.unshift(queue.pop());
+        // put back one token to be queued in next loop if none was found in this loop
+        if (queue.length == 0) { // found == undefined and queue is 0, that means none found this queue
+          notfound.push(sourceTokens.shift());
         }
       }
     }

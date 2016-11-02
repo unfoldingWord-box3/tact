@@ -56,7 +56,6 @@ console.timeEnd('corpus');
 console.time('table');
 var corpusTable = table.generate(corpus);
 var correctionsTable = table.generate(corrections, true);
-// console.log("\n\n\tTable:\n\n", table);
 console.timeEnd('table');
 
 console.time('alignment');

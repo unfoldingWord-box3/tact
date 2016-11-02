@@ -11,7 +11,7 @@ var ngrams = natural.NGrams;
 
 var tablePush = function(source, target, table, isCorrections) {
   var sourceArray, targetArray;
-  if (isCorrections == true) {
+  if (isCorrections) {
     sourceArray = [source];
     targetArray = [target];
   } else {
@@ -42,12 +42,16 @@ var generate = function(trainingSet, isCorrections, table) {
     var source = pair[0];
     var target = pair[1];
 
-    var sourceSegments = segmenter.tokenize(source);
-    var targetSegments = segmenter.tokenize(target);
-    if (sourceSegments.length == targetSegments.length) {
-      sourceSegments.forEach(function(sourceSegment, _index){
-        tablePush(sourceSegment, targetSegments[_index], table, isCorrections);
-      });
+    if (!isCorrections) {
+      var sourceSegments = segmenter.tokenize(source);
+      var targetSegments = segmenter.tokenize(target);
+      if (sourceSegments.length == targetSegments.length) {
+        sourceSegments.forEach(function(sourceSegment, _index){
+          tablePush(sourceSegment, targetSegments[_index], table, isCorrections);
+        });
+      } else {
+        tablePush(source, target, table, isCorrections);
+      }
     } else {
       tablePush(source, target, table, isCorrections);
     }

@@ -11,10 +11,10 @@ exports.penalties = {
 }
 
 exports.bonus = {
-  correction: 1.0
+  correction: 1.0 // added to score
 }
 
-exports.weights = {
+exports.weights = { // weighted averaged (Ar*Aw + Br*Bw + Cr*Cw)/Sum(weights)
   tableRatios: 10,
   sourceUniqueness: 4,
   targetUniqueness: 0,

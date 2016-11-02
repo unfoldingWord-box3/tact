@@ -8,13 +8,18 @@ var tokenizer = new natural.RegexpTokenizer({pattern: nonUnicodeLetter});
 var ngrams = natural.NGrams;
 
 // favor phrases over words
-var longerNgramScore = function(sourceNgram, targetNgram) {
+var longerNgramScore = function(sourceNgram, targetNgram, isCorrection) {
   var longerNgramScore;
   var sourceNgramCount = tokenizer.tokenize(sourceNgram).length;
   var targetNgramCount = tokenizer.tokenize(targetNgram).length;
   sourceNgramScore = config.ngrams.targetScores[sourceNgramCount];
   targetNgramScore = config.ngrams.targetScores[targetNgramCount];
   longerNgramScore = (sourceNgramScore + targetNgramScore) / 2
+
+  if (isCorrection) {
+    var deltaNgramMax = Math.abs(config.ngrams.targetMax - sourceNgramCount);
+    longerNgramScore = 1/(deltaNgramMax+1);
+  }
 
   return longerNgramScore;
 }
@@ -59,12 +64,16 @@ var sizeDeltaScore = function(sourceNgram, targetNgram, sourceString, targetStri
 exports.score = function(sourceString, targetString, sourceNgramArray, targetNgramArray, alignmentObject) {
   var sourceNgram = alignmentObject.sourceNgram;
   var targetNgram = alignmentObject.targetNgram;
+  var isCorrection = alignmentObject.correction;
 
   var weightSum = tools.sum(config.weights);
+  if (isCorrection) {
+    weightSum = weightSum + config.weights.longerNgrams * 9;
+  }
   var score = (
     config.weights.tableRatios * alignmentObject.ratio +
     config.weights.sourceUniqueness * alignmentObject.sourceUniqueness +
-    config.weights.longerNgrams * longerNgramScore(sourceNgram, targetNgram) +
+    config.weights.longerNgrams * (isCorrection ? 10 : 1) * longerNgramScore(sourceNgram, targetNgram, isCorrection) +
     config.weights.occurrenceDelta * occurrenceDeltaScore(sourceNgram, targetNgram, sourceNgramArray, targetNgramArray) +
     config.weights.positionDelta * positionDeltaScore(sourceNgram, targetNgram, sourceString, targetString) +
     config.weights.sizeDelta * sizeDeltaScore(sourceNgram, targetNgram, sourceString, targetString)
