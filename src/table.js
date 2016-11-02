@@ -42,7 +42,7 @@ var generate = function(trainingSet, isCorrections, table) {
     var source = pair[0];
     var target = pair[1];
 
-    if (!isCorrections) {
+    if (config.segmentation.corpus && !isCorrections) {
       var sourceSegments = segmenter.tokenize(source);
       var targetSegments = segmenter.tokenize(target);
       if (sourceSegments.length == targetSegments.length) {

@@ -1,4 +1,9 @@
 
+exports.segmentation = {
+  corpus: true,
+  aligner: false
+}
+
 exports.ngrams = {
   sourceMax: 2,
   targetMax: 3,

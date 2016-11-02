@@ -165,7 +165,7 @@ var align = function(pairForAlignment, corpusTable, correctionsTable) {
 
   var sourceSegments = segmenter.tokenize(sourceString);
   var targetSegments = segmenter.tokenize(targetString);
-  if (sourceSegments.length == targetSegments.length) {
+  if (config.segmentation.aligner && sourceSegments.length == targetSegments.length) {
     sourceSegments.forEach(function(sourceSegment, _index){
       segmentQueue.push([sourceSegment, targetSegments[_index]]);
     });
