@@ -21,14 +21,14 @@ var corpus = [];
 sources.forEach(function(string, index){ corpus.push([string, targets[index]]); });
 var pairForAlignment = ["hello taco world", "dlrow ocat olleh"];
 
-var table = table.generate(corpus);
+var statisticalTable = table.generate(corpus);
 
 describe('wordAligner.tableGenerate', function() {
   it('tableGenerate should return an object of which values are objects and its values are numbers.', function() {
-    assert.isObject(table);
-    var sourceWords = Object.keys(table);
+    assert.isObject(statisticalTable);
+    var sourceWords = Object.keys(statisticalTable);
     var sourceWord = sourceWords[0];
-    var sourceWordValue = table[sourceWord];
+    var sourceWordValue = statisticalTable[sourceWord];
     assert.isObject(sourceWordValue);
     var targetWords = Object.keys(sourceWordValue);
     var targetWord = targetWords[0];
@@ -38,7 +38,7 @@ describe('wordAligner.tableGenerate', function() {
 });
 
 describe('wordAligner.align', function() {
-  var alignmentData = wordAligner.align(pairForAlignment, table);
+  var alignmentData = wordAligner.align(pairForAlignment, statisticalTable);
   console.log(alignmentData);
   it('align should return an array for each source word', function(){
     var count = tokenizer.tokenize(pairForAlignment[0]).length;
@@ -53,5 +53,20 @@ describe('wordAligner.align', function() {
     assert.isString(targetNgram);
     var score = alignment[2];
     assert.isNumber(score);
+  });
+  it('align should have results of high confidence if supporting data is in corrections.', function() {
+    var correctionCorpus = [
+      ["hello","olleh"]
+    ];
+    var tableCorrections = table.generate(correctionCorpus, true);
+    alignmentData = wordAligner.align(pairForAlignment, statisticalTable, tableCorrections);
+    var alignment = alignmentData[0];
+    assert.isArray(alignment);
+    var sourceNgram = alignment[0];
+    assert.isString(sourceNgram);
+    var targetNgram = alignment[1];
+    assert.isString(targetNgram);
+    var score = alignment[2];
+    assert.isAtLeast(score, 1.0);
   });
 });
