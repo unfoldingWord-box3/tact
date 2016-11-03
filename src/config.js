@@ -19,6 +19,10 @@ exports.bonus = {
   correction: 1.0 // added to score
 }
 
+exports.corrections = {
+  applyLongerNgramsFirst: 10 // multiplier for longerNgrams weight
+};
+
 exports.weights = { // weighted averaged (Ar*Aw + Br*Bw + Cr*Cw)/Sum(weights)
   tableRatios: 10,
   sourceUniqueness: 4,

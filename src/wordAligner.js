@@ -3,8 +3,7 @@ var XRegExp = require('xregexp');
 var tools = require('./tools.js');
 var config = require('./config.js');
 var scoring = require('./scoring.js');
-var nonUnicodeLetter = XRegExp('\\PL+');
-// var nonUnicodeLetter = XRegExp('[^\\pL]+');
+var nonUnicodeLetter = XRegExp('\\PL+'); // var nonUnicodeLetter = XRegExp('[^\\pL]+');
 var tokenizer = new natural.RegexpTokenizer({pattern: nonUnicodeLetter});
 var unicodePunctuation = XRegExp("\\s*\\p{P}+\\s*");
 var segmenter = new natural.RegexpTokenizer({pattern: unicodePunctuation});
@@ -12,10 +11,8 @@ var ngrams = natural.NGrams;
 
 var alignmentData = function(sourceString, targetString, table, isCorrections) {
   var _alignmentData = [];
-
   var sourceNgramArray = tools.ngram(sourceString, config.ngrams.sourceMax);
   var targetNgramArray = tools.ngram(targetString, config.ngrams.targetMax);
-
   sourceNgramArray.forEach(function(sourceNgram, index){
     var alignmentsPerSource = [];
     var total = 0; // rename to filtered
@@ -47,18 +44,14 @@ var alignmentData = function(sourceString, targetString, table, isCorrections) {
       _alignmentData.push(alignmentObject);
     });
   });
-
-  // console.log(_alignmentData);
   return _alignmentData;
 }
-
 // determine the combination of best alignmentObjects for highest combined score
 var bestAlignments = function(sourceString, targetString, _alignmentData) {
   var alignment = []; // response
   var neededSource = tokenizer.tokenize(sourceString).join(' ');
   var neededTarget = tokenizer.tokenize(targetString).join(' ');
   var available = _alignmentData.slice(0);
-
   do { // use all source words
     available.sort(function(a,b) {
       return b.score - a.score;
@@ -74,10 +67,9 @@ var bestAlignments = function(sourceString, targetString, _alignmentData) {
       alignment.push(bestPair);
     }
   } while (available.length > 0 && tokenizer.tokenize(neededSource).length > 0);
-
   return alignment;
 }
-
+// instead of previous approach of conflicts, look to see what is needed
 var isNeeded = function(alignmentObject, neededSource, neededTarget) {
   var needed = true;
   var regexSource = new RegExp("( |^)+?" + alignmentObject.sourceNgram + "( |$)+?", 'g');
@@ -88,7 +80,7 @@ var isNeeded = function(alignmentObject, neededSource, neededTarget) {
       }
   return needed
 }
-
+// penalize remaining alignments so that they are less likely to be selected
 var penalizeConflictingAlignments = function(alignmentObject, available, neededSource, neededTarget) {
   available.forEach(function(_alignmentObject, index) {
     var needed = isNeeded(_alignmentObject, neededSource, neededTarget);
@@ -100,13 +92,11 @@ var penalizeConflictingAlignments = function(alignmentObject, available, neededS
   });
   return available;
 }
-
 // determine the best single alignmentObject
 var bestAlignment = function(alignmentData) {
   var alignmentObject = alignmentData.shift();
   return alignmentObject;
 }
-
 // this function could be optimized by passing in alignment as an object instead of array
 // sourceTokens = [tokens...], alignment = [sourceNgram, targetNgram, score]
 var alignmentBySourceTokens = function(_sourceTokens, alignment) {
@@ -149,20 +139,15 @@ var alignmentBySourceTokens = function(_sourceTokens, alignment) {
       }
     }
   }
-  // console.log("unorderedAlignment: ", unorderedAlignment); // console.log("SourceTokens: ", sourceTokens); // console.log("orderedAlignment: ", orderedAlignment); // console.log("queue: ", queue);
   if (notfound.length > 0) console.log("notfound: ", notfound);
-  // console.log("found: ", found); // console.log("n: ", n);
-  // Potentially re-align remaining tokens not already aligned
   return orderedAlignment;
 }
-
+// main alignment function that calls the other functions internally
 var align = function(pairForAlignment, corpusTable, correctionsTable) {
   var alignment = []; // response
   var sourceString = pairForAlignment[0];
   var targetString = pairForAlignment[1];
-
   var segmentQueue = [];
-
   var sourceSegments = segmenter.tokenize(sourceString);
   var targetSegments = segmenter.tokenize(targetString);
   if (config.segmentation.aligner && sourceSegments.length == targetSegments.length) {
@@ -172,7 +157,6 @@ var align = function(pairForAlignment, corpusTable, correctionsTable) {
   } else {
     segmentQueue.push([sourceString, targetString]);
   }
-
   segmentQueue.forEach(function(segmentPair, index) {
     var _sourceString = segmentPair[0];
     var _targetString = segmentPair[1];
@@ -191,8 +175,6 @@ var align = function(pairForAlignment, corpusTable, correctionsTable) {
       alignment.push(alignmentObject);
     });
   });
-
   return alignment;
 };
-
 exports.align = align;

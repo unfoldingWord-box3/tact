@@ -2,8 +2,7 @@ var natural = require('natural');
 var XRegExp = require('xregexp');
 var tools = require('./tools.js');
 var config = require('./config.js');
-var nonUnicodeLetter = XRegExp('\\PL+');
-// var nonUnicodeLetter = XRegExp('[^\\pL]+');
+var nonUnicodeLetter = XRegExp('\\PL+'); // var nonUnicodeLetter = XRegExp('[^\\pL]+');
 var tokenizer = new natural.RegexpTokenizer({pattern: nonUnicodeLetter});
 var unicodePunctuation = XRegExp("\\s*\\p{P}+\\s*");
 var segmenter = new natural.RegexpTokenizer({pattern: unicodePunctuation});
@@ -32,7 +31,6 @@ var tablePush = function(source, target, table, isCorrections) {
   });
   return table;
 }
-
 // can pass in table so that it can incriment counts
 var generate = function(trainingSet, isCorrections, table) {
   if (table == undefined) var table = {}; // response
@@ -41,7 +39,6 @@ var generate = function(trainingSet, isCorrections, table) {
   trainingSet.forEach(function(pair, index) {
     var source = pair[0];
     var target = pair[1];
-
     if (config.segmentation.corpus && !isCorrections) {
       var sourceSegments = segmenter.tokenize(source);
       var targetSegments = segmenter.tokenize(target);
@@ -59,5 +56,4 @@ var generate = function(trainingSet, isCorrections, table) {
   trainingSet = [];
   return table;
 };
-
 exports.generate = generate;

@@ -1,9 +1,7 @@
 var natural = require('natural');
 var XRegExp = require('xregexp');
-var tools = require('./tools.js');
 var config = require('./config.js');
-var nonUnicodeLetter = XRegExp('\\PL+');
-// var nonUnicodeLetter = XRegExp('[^\\pL]+');
+var nonUnicodeLetter = XRegExp('\\PL+'); // var nonUnicodeLetter = XRegExp('[^\\pL]+');
 var tokenizer = new natural.RegexpTokenizer({pattern: nonUnicodeLetter});
 var ngrams = natural.NGrams;
 
@@ -19,18 +17,6 @@ exports.forObject = function(object, callback) {
   return Object.keys(object).map(function (key) {
     return callback(key, object[key]);
   });
-}
-
-exports.arrayIntersect = function(a, b) {
-  var d = {};
-  var results = [];
-  for (var i = 0; i < b.length; i++) {
-    d[b[i]] = true;
-  }
-  for (var j = 0; j < a.length; j++) {
-    if (d[a[j]]) results.push(a[j]);
-  }
-  return results;
 }
 
 exports.countInArray = function(array, item) {
