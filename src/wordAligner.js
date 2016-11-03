@@ -57,8 +57,8 @@ var bestAlignments = function(sourceString, targetString, _alignmentData) {
       return b.score - a.score;
     });
     var best = bestAlignment(available);
-    var regexSource = new RegExp("( |^)+?" + best.sourceNgram + "( |$)+?", 'g');
-    var regexTarget = new RegExp("( |^)+?" + best.targetNgram + "( |$)+?", 'g');
+    var regexSource = new RegExp("( |^)+?" + best.sourceNgram + "( |$)+?", '');
+    var regexTarget = new RegExp("( |^)+?" + best.targetNgram + "( |$)+?", '');
     if (best !== undefined && neededSource.match(regexSource) != null) {
       neededSource = neededSource.replace(regexSource, '  ');
       neededTarget = neededTarget.replace(regexTarget, '  ');
@@ -72,8 +72,8 @@ var bestAlignments = function(sourceString, targetString, _alignmentData) {
 // instead of previous approach of conflicts, look to see what is needed
 var isNeeded = function(alignmentObject, neededSource, neededTarget) {
   var needed = true;
-  var regexSource = new RegExp("( |^)+?" + alignmentObject.sourceNgram + "( |$)+?", 'g');
-  var regexTarget = new RegExp("( |^)+?" + alignmentObject.targetNgram + "( |$)+?", 'g');
+  var regexSource = new RegExp("( |^)+?" + alignmentObject.sourceNgram + "( |$)+?", '');
+  var regexTarget = new RegExp("( |^)+?" + alignmentObject.targetNgram + "( |$)+?", '');
   if (neededSource.search(regexSource) == -1 ||
       neededTarget.search(regexTarget) == -1) {
         needed = false;
