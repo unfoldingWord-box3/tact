@@ -105,7 +105,9 @@ var alignmentBySourceTokens = function(_sourceTokens, alignment) {
   // transform alignment into object to look up ngrams
   unorderedAlignment = {};
   alignment.forEach(function(alignmentObject, index) {
-    unorderedAlignment[alignmentObject[0]] = alignmentObject;
+    if (unorderedAlignment[alignmentObject[0]] === undefined) {
+      unorderedAlignment[alignmentObject[0]] = alignmentObject;
+    }
   });
   // build queue of tokens to look up
   var queue = [];
