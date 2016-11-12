@@ -3,50 +3,24 @@ var XRegExp = require('xregexp');
 var tools = require('./tools.js');
 var config = require('./config.js');
 var scoring = require('./scoring.js');
+var phraseTable = require('./phraseTable.js');
+var correctionsTable = require('./correctionsTable.js');
 var nonUnicodeLetter = XRegExp('\\PL+'); // var nonUnicodeLetter = XRegExp('[^\\pL]+');
 var tokenizer = new natural.RegexpTokenizer({pattern: nonUnicodeLetter});
 var unicodePunctuation = XRegExp("\\s*\\p{P}+\\s*");
 var segmenter = new natural.RegexpTokenizer({pattern: unicodePunctuation});
 var ngrams = natural.NGrams;
 
-var alignmentData = function(sourceString, targetString, table, isCorrections) {
-  var _alignmentData = [];
-  var sourceNgramArray = tools.ngram(sourceString, config.ngrams.sourceMax);
-  var targetNgramArray = tools.ngram(targetString, config.ngrams.targetMax);
-  sourceNgramArray.forEach(function(sourceNgram, index){
-    var alignmentsPerSource = [];
-    var total = 0; // rename to filtered
-    var sourceNgramTotal = 0;
-    if (table[sourceNgram] !== undefined) {
-      tools.forObject(table[sourceNgram], function(targetNgram, times){
-        sourceNgramTotal = sourceNgramTotal + times;
-        if (targetNgramArray.indexOf(targetNgram) > -1) {
-          total = total + times;
-          var alignmentObject = {
-            sourceNgram: sourceNgram,
-            targetNgram: targetNgram,
-            times: times
-          };
-          alignmentsPerSource.push(alignmentObject);
-        }
-      });
-    }
-    alignmentsPerSource.forEach(function(alignmentObject) {
-      sourceNgramTokens = tokenizer.tokenize(sourceNgram);
-      alignmentObject.total = total;
-      var ratio = alignmentObject.times / total;
-      alignmentObject.ratio = ratio;
-      alignmentObject.sourceUniqueness = (total/sourceNgramTotal)/(sourceNgramTokens.length*2);
-      alignmentObject.conflict = false;
-      alignmentObject.sourceUsed = false;
-      alignmentObject.correction = isCorrections;
-      alignmentObject = scoring.score(sourceString, targetString, sourceNgramArray, targetNgramArray, alignmentObject);
-      _alignmentData.push(alignmentObject);
-    });
+var alignmentData = function(source, target, tableRows, correction) {
+  tableRows.forEach(function(row) {
+    row.conflict = false;
+    row.sourceUsed = false;
+    row.correction = correction;
+    row = scoring.score(source, target, row);
   });
-  return _alignmentData;
-}
-// determine the combination of best alignmentObjects for highest combined score
+  return tableRows;
+};
+// determine the combination of best rows for highest combined score
 var bestAlignments = function(sourceString, targetString, _alignmentData) {
   var alignment = []; // response
   var neededSource = tokenizer.tokenize(sourceString).join(' ');
@@ -57,23 +31,23 @@ var bestAlignments = function(sourceString, targetString, _alignmentData) {
       return b.score - a.score;
     });
     var best = bestAlignment(available);
-    var regexSource = new RegExp("( |^)+?" + best.sourceNgram + "( |$)+?", '');
-    var regexTarget = new RegExp("( |^)+?" + best.targetNgram + "( |$)+?", '');
+    var regexSource = new RegExp("( |^)+?" + best.source + "( |$)+?", '');
+    var regexTarget = new RegExp("( |^)+?" + best.target + "( |$)+?", '');
     if (best !== undefined && neededSource.match(regexSource) != null) {
       neededSource = neededSource.replace(regexSource, '  ');
       neededTarget = neededTarget.replace(regexTarget, '  ');
       available = penalizeConflictingAlignments(best, available, neededSource, neededTarget);
-      var bestPair = [best.sourceNgram, best.targetNgram, best.score]
+      var bestPair = [best.source, best.target, best.score]
       alignment.push(bestPair);
     }
   } while (available.length > 0 && tokenizer.tokenize(neededSource).length > 0);
   return alignment;
 }
 // instead of previous approach of conflicts, look to see what is needed
-var isNeeded = function(alignmentObject, neededSource, neededTarget) {
+var isNeeded = function(row, neededSource, neededTarget) {
   var needed = true;
-  var regexSource = new RegExp("( |^)+?" + alignmentObject.sourceNgram + "( |$)+?", '');
-  var regexTarget = new RegExp("( |^)+?" + alignmentObject.targetNgram + "( |$)+?", '');
+  var regexSource = new RegExp("( |^)+?" + row.source + "( |$)+?", '');
+  var regexTarget = new RegExp("( |^)+?" + row.target + "( |$)+?", '');
   if (neededSource.search(regexSource) == -1 ||
       neededTarget.search(regexTarget) == -1) {
         needed = false;
@@ -81,32 +55,32 @@ var isNeeded = function(alignmentObject, neededSource, neededTarget) {
   return needed
 }
 // penalize remaining alignments so that they are less likely to be selected
-var penalizeConflictingAlignments = function(alignmentObject, available, neededSource, neededTarget) {
-  available.forEach(function(_alignmentObject, index) {
-    var needed = isNeeded(_alignmentObject, neededSource, neededTarget);
-    if (!needed && !_alignmentObject.correction) {
+var penalizeConflictingAlignments = function(row, available, neededSource, neededTarget) {
+  available.forEach(function(_row, index) {
+    var needed = isNeeded(_row, neededSource, neededTarget);
+    if (!needed && !_row.correction) {
       available[index].conflict = true;
-      newScore = alignmentObject.score/config.penalties.conflict;
+      newScore = row.score/config.penalties.conflict;
       available[index].score = Math.round( newScore * 1000) / 1000
     }
   });
   return available;
 }
-// determine the best single alignmentObject
+// determine the best single row
 var bestAlignment = function(alignmentData) {
-  var alignmentObject = alignmentData.shift();
-  return alignmentObject;
+  var row = alignmentData.shift();
+  return row;
 }
 // this function could be optimized by passing in alignment as an object instead of array
-// sourceTokens = [tokens...], alignment = [sourceNgram, targetNgram, score]
+// sourceTokens = [tokens...], alignment = [source, target, score]
 var alignmentBySourceTokens = function(_sourceTokens, alignment) {
   sourceTokens = _sourceTokens.slice(0);
   var orderedAlignment = []; // response
   // transform alignment into object to look up ngrams
   unorderedAlignment = {};
-  alignment.forEach(function(alignmentObject, index) {
-    if (unorderedAlignment[alignmentObject[0]] === undefined) {
-      unorderedAlignment[alignmentObject[0]] = alignmentObject;
+  alignment.forEach(function(row, index) {
+    if (unorderedAlignment[row[0]] === undefined) {
+      unorderedAlignment[row[0]] = row;
     }
   });
   // build queue of tokens to look up
@@ -145,13 +119,13 @@ var alignmentBySourceTokens = function(_sourceTokens, alignment) {
   return orderedAlignment;
 }
 // main alignment function that calls the other functions internally
-var align = function(pairForAlignment, corpusTable, correctionsTable) {
+var align = function(pairForAlignment, callback) {
   var alignment = []; // response
   var sourceString = pairForAlignment[0];
   var targetString = pairForAlignment[1];
-  var segmentQueue = [];
   var sourceSegments = segmenter.tokenize(sourceString);
   var targetSegments = segmenter.tokenize(targetString);
+  var segmentQueue = [];
   if (config.segmentation.aligner && sourceSegments.length == targetSegments.length) {
     sourceSegments.forEach(function(sourceSegment, _index){
       segmentQueue.push([sourceSegment, targetSegments[_index]]);
@@ -162,21 +136,21 @@ var align = function(pairForAlignment, corpusTable, correctionsTable) {
   segmentQueue.forEach(function(segmentPair, index) {
     var _sourceString = segmentPair[0];
     var _targetString = segmentPair[1];
-    // align words/phrases found in userLexicon then keywordLexicon, then build statisticalLexicon from remaining ngrams.
-    // var lexiconAlignmentData = alignmentData(sourceString, targetString, lexiconTable);
-    var _alignmentData = alignmentData(_sourceString, _targetString, corpusTable, false);
-    if (correctionsTable !== undefined) {
-      var correctionsAlignmentData = alignmentData(_sourceString, _targetString, correctionsTable, true);
-      _alignmentData = correctionsAlignmentData.concat(_alignmentData);
-    }
-    // process of elimination
-    _alignment = bestAlignments(_sourceString, _targetString, _alignmentData);
-    // reorder alignments to match source order
-    _alignment = alignmentBySourceTokens(tokenizer.tokenize(_sourceString), _alignment);
-    _alignment.forEach(function(alignmentObject, index) {
-      alignment.push(alignmentObject);
+    phraseTable.prune(_sourceString, _targetString, function(_phraseTable) {
+      correctionsTable.prune(_sourceString, _targetString, function(_correctionsTable) {
+        var _alignmentData = alignmentData(_sourceString, _targetString, _phraseTable, false);
+        var correctionsAlignmentData = alignmentData(_sourceString, _targetString, _correctionsTable, true);
+        _alignmentData = correctionsAlignmentData.concat(_alignmentData);
+        // process of elimination
+        _alignment = bestAlignments(_sourceString, _targetString, _alignmentData);
+        // reorder alignments to match source order
+        _alignment = alignmentBySourceTokens(tokenizer.tokenize(_sourceString), _alignment);
+        _alignment.forEach(function(row, index) {
+          alignment.push(row);
+        });
+        callback(alignment);
+      });
     });
   });
-  return alignment;
 };
 exports.align = align;
