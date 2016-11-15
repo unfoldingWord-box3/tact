@@ -7,7 +7,7 @@ exports.segmentation = {
 exports.ngrams = {
   sourceMax: 2,
   targetMax: 3,
-  sourceScores: [0, 1.0, 0.9], //[0,1,2]
+  sourceScores: [0, 1.0, 0.8, 0.6], //[0,1,2]
   targetScores: [0, 0.9, 1.0, 0.8, 0.7] //[0,1,2,3,4]
 };
 
@@ -24,7 +24,10 @@ exports.corrections = {
 };
 
 exports.weights = { // weighted averaged (Ar*Aw + Br*Bw + Cr*Cw)/Sum(weights)
-  tableRatios: 10,
+  localSourceRatio: 7,
+  localTargetRatio: 0,
+  globalSourceRatio: 3,
+  globalTargetRatio: 0,
   sourceUniqueness: 4,
   targetUniqueness: 0,
   longerNgrams: 3,

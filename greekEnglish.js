@@ -1,6 +1,8 @@
 var natural = require('natural');
 var XRegExp = require('xregexp');
-var table = require('./src/table.js');
+var async = require('async');
+var phraseTable = require('./src/phraseTable.js');
+var correctionsTable = require('./src/correctionsTable.js');
 var wordAligner = require('./src/wordAligner.js');
 
 var nonUnicodeLetter = XRegExp('\\PL');
@@ -53,21 +55,32 @@ var targetFileCorrections = './tests/fixtures/greekToEnglish/corrections/english
 corrections = parseCorpusFiles(sourceFileCorrections, targetFileCorrections);
 console.timeEnd('corpus');
 
+var corpus = corpus.splice(1,10000);
+
+// var alignmentPairs = corpus.slice(0).splice(1,17);
+var alignmentPairs = corpus.slice(0).splice(0,100);
+
 console.time('table');
-var corpusTable = table.generate(corpus);
-var correctionsTable = table.generate(corrections, true);
-console.timeEnd('table');
+correctionsTable.generate(corrections, function() {
+  console.log('correctionsTable done.');
+  phraseTable.generate(corpus, function() {
+    console.timeEnd('table');
 
-console.time('alignment');
-var alignmentPairs = corpus.slice(0).splice(1,100);
-var alignmentPairsOutput = [];
-alignmentPairs.forEach(function(alignmentPair) {
-  console.log("\n\n\tSource: ", alignmentPair[0]);
-  console.log("\n\tTarget: ", alignmentPair[1]);
-  var alignment = wordAligner.align(alignmentPair, corpusTable, correctionsTable);
-  console.log("\n\tAlignment:\n", alignment);
-  alignmentPairsOutput.push(alignment);
+    console.time('alignment');
+    async.mapSeries(alignmentPairs,
+      function(alignmentPair, callback) {
+        wordAligner.align(alignmentPair, function(alignments) {
+          console.log("\n\n\tSource: ", alignmentPair[0], "\n\tTarget: ", alignmentPair[1], "\n\tAlignments:\n", alignments);
+          callback(null, alignments);
+        });
+      },
+      function(err, allAlignments) {
+        allAlignments.forEach(function(alignments, index) {
+          var alignmentPair = alignmentPairs[index];
+        });
+        console.timeEnd('alignment');
+        console.log("\n\tAll Alignment Output:\n", allAlignments);
+      }
+    );
+  });
 });
-console.timeEnd('alignment');
-
-console.log("\n\tAll Alignment Output:\n", alignmentPairsOutput);

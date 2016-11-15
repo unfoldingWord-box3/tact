@@ -30,6 +30,8 @@
   },
   "dependencies": {
     "natural": "^0.1.22",
-    "xregexp": "^3.1.1"
+    "sqlite3": "^3.1.8",
+    "xregexp": "^3.1.1",
+    "async": "^2.0.0"
   }
 }

@@ -1,59 +1,86 @@
-var natural = require('natural');
-var XRegExp = require('xregexp');
-var tools = require('./tools.js');
 var config = require('./config.js');
-var nonUnicodeLetter = XRegExp('\\PL+'); // var nonUnicodeLetter = XRegExp('[^\\pL]+');
-var tokenizer = new natural.RegexpTokenizer({pattern: nonUnicodeLetter});
-var unicodePunctuation = XRegExp("\\s*\\p{P}+\\s*");
-var segmenter = new natural.RegexpTokenizer({pattern: unicodePunctuation});
-var ngrams = natural.NGrams;
+var tools = require('./tools.js');
+var db = require('./db.js').db;
+var async = require('async');
+var scoring = require('./scoring.js');
 
-var tablePush = function(source, target, table, isCorrections) {
-  var sourceArray, targetArray;
-  if (isCorrections) {
-    sourceArray = [source];
-    targetArray = [target];
-  } else {
-    sourceArray = tools.ngram(source, config.ngrams.sourceMax);
-    targetArray = tools.ngram(target, config.ngrams.targetMax);
-  }
-  sourceArray.forEach(function(sourceNgram, index) {
-    if (table[sourceNgram] === undefined) {
-      table[sourceNgram] = {};
-    }
-    targetArray.forEach(function(targetNgram, index) {
-      if (table[sourceNgram][targetNgram] === undefined) {
-        table[sourceNgram][targetNgram] = 1;
-      } else {
-        table[sourceNgram][targetNgram] ++;
-      }
-    });
-  });
-  return table;
-}
-// can pass in table so that it can incriment counts
-var generate = function(trainingSet, isCorrections, table) {
-  if (table == undefined) var table = {}; // response
-  // loop through trainingSet
-  // generate ngrams of source and target
-  trainingSet.forEach(function(pair, index) {
-    var source = pair[0];
-    var target = pair[1];
-    if (config.segmentation.corpus && !isCorrections) {
-      var sourceSegments = segmenter.tokenize(source);
-      var targetSegments = segmenter.tokenize(target);
-      if (sourceSegments.length == targetSegments.length) {
-        sourceSegments.forEach(function(sourceSegment, _index){
-          tablePush(sourceSegment, targetSegments[_index], table, isCorrections);
-        });
-      } else {
-        tablePush(source, target, table, isCorrections);
-      }
-    } else {
-      tablePush(source, target, table, isCorrections);
-    }
-  });
-  trainingSet = [];
-  return table;
+var cleanup = function(tableName, callback) {
+  db.run("DROP TABLE IF EXISTS " + tableName + ";", callback);
 };
-exports.generate = generate;
+exports.cleanup = cleanup;
+
+var init = function(tableName, callback) {
+  cleanup(tableName, function(err) {
+    db.run("CREATE TABLE IF NOT EXISTS " + tableName + " (source TEXT, targets TEXT);", callback);
+  });
+};
+exports.init = init;
+
+var bulkInsert = function(tableName, permutations, callback) {
+  var clauses = [];
+  tools.forObject(permutations, function(source, targets){
+    clause = "('" + source + "','" + JSON.stringify(targets) + "')";
+    clauses.push(clause);
+  });
+  db.run("BEGIN TRANSACTION;");
+  do {
+    _clauses = clauses.splice(0,1000);
+    var statement = "INSERT INTO " + tableName + " (source,targets) VALUES ";
+    statement = statement + _clauses.join(",") + ";";
+    db.run(statement);
+  } while (clauses.length > 0);
+  db.run("END TRANSACTION;", function(){
+    // Adding indices after inserts doubles speed of inserts
+    db.run("CREATE UNIQUE INDEX SourceIndex ON " + tableName + " (source)", callback);
+  });
+};
+exports.bulkInsert = bulkInsert;
+
+exports.getCount = function(tableName, callback) {
+  db.all("SELECT COUNT(*) AS count FROM " + tableName + ";", function(err, all){
+    callback( all === undefined ? -1 : all[0].count );
+  });
+};
+
+var calculateRows = function(row, tableName, sourceString, targetString, sourcePhrases, targetPhrases) {
+  var rows = []
+  var targets = JSON.parse(row.targets);
+  var globalSourceTotal = 0;
+  var localSourceTotal = 0;
+  tools.forObject(targets, function(target, tally) {
+    globalSourceTotal = globalSourceTotal + tally;
+    if (targetPhrases.indexOf(target) > -1) {
+      localSourceTotal = localSourceTotal + tally;
+    }
+  });
+  tools.forObject(targets, function(target, tally) {
+    if (targetPhrases.indexOf(target) > -1) {
+      var _row = {
+        source: row.source, target: target, tally: tally,
+        globalSourceTotal: globalSourceTotal,
+        localSourceTotal: localSourceTotal,
+        globalTargetTotal: 0,
+        localTargetTotal: 0,
+        conflict: false,
+        sourceUsed: false,
+        correction: (tableName == 'corrections')
+      };
+      _row = scoring.score(sourceString, targetString, _row);
+      rows.push(_row);
+    }
+  });
+  return rows;
+};
+
+var phrases = function(tableName, sourceString, targetString, sourcePhrases, targetPhrases, callback) {
+  var rows = [];
+  statement = "SELECT * FROM " + tableName + " WHERE source IN ('" + sourcePhrases.join("','") + "');"
+  db.each(statement, function(err, row) {
+    // if (row.source == 'εσρωμ'){console.log(row);}
+    _rows = calculateRows(row, tableName, sourceString, targetString, sourcePhrases, targetPhrases);
+    rows = rows.concat(_rows);
+  }, function() {
+    callback(rows);
+  });
+};
+exports.phrases = phrases;
