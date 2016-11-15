@@ -55,7 +55,7 @@ var targetFileCorrections = './tests/fixtures/greekToEnglish/corrections/english
 corrections = parseCorpusFiles(sourceFileCorrections, targetFileCorrections);
 console.timeEnd('corpus');
 
-// var corpus = corpus.slice(0).splice(1,6000);
+var corpus = corpus.splice(1,10000);
 
 // var alignmentPairs = corpus.slice(0).splice(1,17);
 var alignmentPairs = corpus.slice(0).splice(0,100);
@@ -67,18 +67,16 @@ correctionsTable.generate(corrections, function() {
     console.timeEnd('table');
 
     console.time('alignment');
-    async.map(alignmentPairs,
+    async.mapSeries(alignmentPairs,
       function(alignmentPair, callback) {
         wordAligner.align(alignmentPair, function(alignments) {
+          console.log("\n\n\tSource: ", alignmentPair[0], "\n\tTarget: ", alignmentPair[1], "\n\tAlignments:\n", alignments);
           callback(null, alignments);
         });
       },
       function(err, allAlignments) {
         allAlignments.forEach(function(alignments, index) {
           var alignmentPair = alignmentPairs[index];
-          console.log("\n\n\tSource: ", alignmentPair[0]);
-          console.log("\n\tTarget: ", alignmentPair[1]);
-          console.log("\n\tAlignments:\n", alignments);
         });
         console.timeEnd('alignment');
         console.log("\n\tAll Alignment Output:\n", allAlignments);

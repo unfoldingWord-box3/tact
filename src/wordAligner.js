@@ -11,15 +11,6 @@ var unicodePunctuation = XRegExp("\\s*\\p{P}+\\s*");
 var segmenter = new natural.RegexpTokenizer({pattern: unicodePunctuation});
 var ngrams = natural.NGrams;
 
-var alignmentData = function(source, target, tableRows, correction) {
-  tableRows.forEach(function(row) {
-    row.conflict = false;
-    row.sourceUsed = false;
-    row.correction = correction;
-    row = scoring.score(source, target, row);
-  });
-  return tableRows;
-};
 // determine the combination of best rows for highest combined score
 var bestAlignments = function(sourceString, targetString, _alignmentData) {
   var alignment = []; // response
@@ -30,6 +21,7 @@ var bestAlignments = function(sourceString, targetString, _alignmentData) {
     available.sort(function(a,b) {
       return b.score - a.score;
     });
+
     var best = bestAlignment(available);
     var regexSource = new RegExp("( |^)+?" + best.source + "( |$)+?", '');
     var regexTarget = new RegExp("( |^)+?" + best.target + "( |$)+?", '');
@@ -138,11 +130,9 @@ var align = function(pairForAlignment, callback) {
     var _targetString = segmentPair[1];
     phraseTable.prune(_sourceString, _targetString, function(_phraseTable) {
       correctionsTable.prune(_sourceString, _targetString, function(_correctionsTable) {
-        var _alignmentData = alignmentData(_sourceString, _targetString, _phraseTable, false);
-        var correctionsAlignmentData = alignmentData(_sourceString, _targetString, _correctionsTable, true);
-        _alignmentData = correctionsAlignmentData.concat(_alignmentData);
+        alignmentData = _correctionsTable.concat(_phraseTable);
         // process of elimination
-        _alignment = bestAlignments(_sourceString, _targetString, _alignmentData);
+        _alignment = bestAlignments(_sourceString, _targetString, alignmentData);
         // reorder alignments to match source order
         _alignment = alignmentBySourceTokens(tokenizer.tokenize(_sourceString), _alignment);
         _alignment.forEach(function(row, index) {

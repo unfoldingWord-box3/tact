@@ -8,11 +8,11 @@ var ngrams = natural.NGrams;
 
 var ratioScore = function(row) {
   row.localSourceRatio = row.tally / row.localSourceTotal;
-  row.localTargetRatio = row.tally / row.localTargetTotal;
+  row.localTargetRatio = 0 // row.tally / row.localTargetTotal;
   row.globalSourceRatio = Math.round(row.tally / row.globalSourceTotal * 1000) / 1000;
-  row.globalTargetRatio = Math.round(row.tally / row.globalTargetTotal * 1000) / 1000;
+  row.globalTargetRatio = 0 // Math.round(row.tally / row.globalTargetTotal * 1000) / 1000;
   row.sourceUniqueness = Math.round(row.localSourceTotal / row.globalSourceTotal * 1000) / 1000;
-  row.targetUniqueness = Math.round(row.localTargetTotal / row.globalTargetTotal * 1000) / 1000;
+  row.targetUniqueness = 0 // Math.round(row.localTargetTotal / row.globalTargetTotal * 1000) / 1000;
   return row;
 };
 exports.ratioScore = ratioScore;

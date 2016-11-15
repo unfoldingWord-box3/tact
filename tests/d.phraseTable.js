@@ -24,7 +24,7 @@ describe('phraseTable', function() {
   it('generate() should add rows to the table', function(done) {
     phraseTable.generate(corpus, function() {
       phraseTable.table.getCount(phraseTable.tableName, function(count) {
-        assert.isAtLeast(count, 70);
+        assert.equal(count, 42);
         done();
       });
     });
