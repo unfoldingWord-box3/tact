@@ -16,23 +16,35 @@ var init = function(tableName, callback) {
 };
 exports.init = init;
 
-var bulkInsert = function(tableName, permutations, callback) {
+var bulkInsert = function(tableName, permutations, progress, callback) {
   var clauses = [];
   tools.forObject(permutations, function(source, targets){
     clause = "('" + source + "','" + JSON.stringify(targets) + "')";
     clauses.push(clause);
   });
-  db.run("BEGIN TRANSACTION;");
+  var statements = [];
   do {
-    _clauses = clauses.splice(0,1000);
+    _clauses = clauses.splice(0,500);
     var statement = "INSERT INTO " + tableName + " (source,targets) VALUES ";
     statement = statement + _clauses.join(",") + ";";
-    db.run(statement);
+    statements.push(statement);
   } while (clauses.length > 0);
-  db.run("END TRANSACTION;", function(){
-    // Adding indices after inserts doubles speed of inserts
-    db.run("CREATE UNIQUE INDEX SourceIndex ON " + tableName + " (source)", callback);
-  });
+  var count = statements.length;
+  var completed = 0;
+  async.eachLimit(statements, 2,
+    function(statement, _callback) {
+      db.run(statement, function() {
+        completed ++;
+        var percent = completed/count;
+        progress(percent);
+        _callback(null);
+      });
+    },
+    function(err) {
+      // Adding indices after inserts doubles speed of inserts
+      db.run("CREATE UNIQUE INDEX SourceIndex ON " + tableName + " (source)", callback);
+    }
+  );
 };
 exports.bulkInsert = bulkInsert;
 
@@ -76,7 +88,6 @@ var phrases = function(tableName, sourceString, targetString, sourcePhrases, tar
   var rows = [];
   statement = "SELECT * FROM " + tableName + " WHERE source IN ('" + sourcePhrases.join("','") + "');"
   db.each(statement, function(err, row) {
-    // if (row.source == 'εσρωμ'){console.log(row);}
     _rows = calculateRows(row, tableName, sourceString, targetString, sourcePhrases, targetPhrases);
     rows = rows.concat(_rows);
   }, function() {

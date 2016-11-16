@@ -43,11 +43,13 @@ var append = function(source, target) {
   });
 };
 // can pass in table so that it can incriment counts
-exports.generate = function(trainingSet, callback) {
+exports.generate = function(trainingSet, progress, callback) {
   table.init(tableName, function(){
     // loop through trainingSet
     // generate ngrams of source and target
+    var count = trainingSet.length;
     trainingSet.forEach(function(pair, index) {
+      progress((index+1)/count);
       var source = pair[0];
       var target = pair[1];
       if (config.segmentation.corpus) {
@@ -65,6 +67,6 @@ exports.generate = function(trainingSet, callback) {
       }
     });
     trainingSet = [];
-    table.bulkInsert(tableName, permutations, callback);
+    table.bulkInsert(tableName, permutations, progress, callback);
   });
 };
