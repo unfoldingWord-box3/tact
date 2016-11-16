@@ -18,7 +18,7 @@ var pairForAlignment = ["hello taco world", "dlrow ocat olleh"];
 
 describe('correctionsTable', function() {
   it('generate() should add rows to the table', function(done) {
-    correctionsTable.generate(corpus, function() {
+    correctionsTable.generate(corpus, function(){}, function() {
       correctionsTable.table.getCount(correctionsTable.tableName, function(count) {
         assert.isAtLeast(count, 1);
         done();

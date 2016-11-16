@@ -22,7 +22,7 @@ var pairForAlignment = ["hello taco world", "dlrow ocat olleh"];
 
 describe('phraseTable', function() {
   it('generate() should add rows to the table', function(done) {
-    phraseTable.generate(corpus, function() {
+    phraseTable.generate(corpus, function(){}, function() {
       phraseTable.table.getCount(phraseTable.tableName, function(count) {
         assert.equal(count, 42);
         done();

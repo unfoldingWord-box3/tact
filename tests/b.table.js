@@ -34,7 +34,7 @@ describe('table', function() {
     });
   });
   it('bulkInsert() should add rows to the table', function(done) {
-    table.bulkInsert(tableName, permutations, function() {
+    table.bulkInsert(tableName, permutations, function(){}, function() {
       table.getCount(tableName, function(count) {
         assert.equal(count, 3);
         done();

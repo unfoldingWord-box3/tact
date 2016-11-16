@@ -37,8 +37,8 @@ var pairForAlignment = ["hello taco world", "dlrow ocat olleh"];
 
 describe('wordAligner.align', function() {
   it('align should return an array for each source word', function(done) {
-    phraseTable.generate(corpus, function() {
-      correctionsTable.generate(corrections, function() {
+    phraseTable.generate(corpus, function(){}, function() {
+      correctionsTable.generate(corrections, function(){}, function() {
         wordAligner.align(pairForAlignment, function(alignment) {
           var count = tokenizer.tokenize(pairForAlignment[0]).length;
           assert.equal(count, alignment.length);
@@ -65,7 +65,7 @@ describe('wordAligner.align', function() {
     var correctionCorpus = [
       ["hello","olleh"]
     ];
-    correctionsTable.generate(correctionCorpus, function() {
+    correctionsTable.generate(correctionCorpus, function(){}, function() {
       wordAligner.align(pairForAlignment, function(alignment) {
         alignmentData = alignment;
         var alignment = alignmentData[0];

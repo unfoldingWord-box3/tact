@@ -79,7 +79,7 @@ correctionsTable.generate(corrections, function() {
           var alignmentPair = alignmentPairs[index];
         });
         console.timeEnd('alignment');
-        console.log("\n\tAll Alignment Output:\n", allAlignments);
+        console.log(JSON.stringify(allAlignments, null, 2));
       }
     );
   });
