@@ -49,4 +49,12 @@ Setup: `npm install`
 
 Run Tests: `npm test`
 
-Run Greek to English example: `npm run greek-english`
+Train on included data:
+`./train.js -s ./tests/fixtures/greekToEnglish/corpus/greek.txt -t
+./tests/fixtures/greekToEnglish/corpus/english.txt -a
+./tests/fixtures/greekToEnglish/corrections/greek.txt -b
+./tests/fixtures/greekToEnglish/corrections/english.txt`
+
+Align first 10 lines of corpus skipping first line:
+`./align.js -s ./tests/fixtures/greekToEnglish/corpus/greek.txt -t
+./tests/fixtures/greekToEnglish/corpus/english.txt -f 1 -n 10`
