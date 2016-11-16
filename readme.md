@@ -1,7 +1,7 @@
 ## TACT: Translation Alignment Correction Tool
 Javascript based nlp statistical word/phrase aligner.
 
-## Status: Pre-Alpha
+## Status: Alpha
 Due to the regularly evolving codebase, documentation is limited to high level concepts and workflow.
 
 ## Approach: Process of elimination
