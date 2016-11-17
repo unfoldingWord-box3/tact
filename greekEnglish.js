@@ -8,6 +8,8 @@ var wordAligner = require('./src/wordAligner.js');
 var nonUnicodeLetter = XRegExp('\\PL');
 var tokenizer = new natural.RegexpTokenizer({pattern: nonUnicodeLetter});
 
+var cli = require('cli');
+
 function lineArray(filename) {
   var array = []; // response
   require('fs').readFileSync(filename).toString().split(/\r?\n/).forEach(function(line){
@@ -61,9 +63,9 @@ var corpus = corpus.splice(1,10000);
 var alignmentPairs = corpus.slice(0).splice(0,100);
 
 console.time('table');
-correctionsTable.generate(corrections, function() {
+correctionsTable.generate(corrections, function(percent){cli.progress(percent);}, function() {
   console.log('correctionsTable done.');
-  phraseTable.generate(corpus, function() {
+  phraseTable.generate(corpus, function(percent){cli.progress(percent);}, function() {
     console.timeEnd('table');
 
     console.time('alignment');
