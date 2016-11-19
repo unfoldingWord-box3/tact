@@ -11,12 +11,10 @@ var server = http.createServer(app);
 /* Configuration */
 // app.set('views', __dirname + '/views');
 app.use(express.static(__dirname + '/public'));
+app.set('port', (process.env.PORT || 3000));
 
 if (process.env.NODE_ENV === 'development') {
-  app.set('port', (process.env.PORT || 3000));
   app.use(express.errorHandler({ dumpExceptions: true, showStack: true }));
-} else {
-  app.set('port', (process.env.PORT || 80));
 }
 
 app.get('/train', function(req, res){
