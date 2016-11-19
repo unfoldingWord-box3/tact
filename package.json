@@ -4,6 +4,10 @@
   "version": "0.1.1",
   "description": "A simplistic way to statistically align words/phrases between two aligned languages including manual corrections.",
   "main": "index.js",
+  "engines": {
+    "node": "6.9.1",
+    "npm": "3.10.8"
+  },
   "scripts": {
     "test": "mocha ./tests/",
     "build": "browserify -t babelify ./app/src/app.jsx -o ./app/public/js/app.js",
