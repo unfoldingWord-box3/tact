@@ -2,8 +2,7 @@
 var chai = require('chai');
 var assert = chai.assert;
 var phraseTable = require('./../tact/src/phraseTable.js');
-var natural = require('natural');
-var tokenizer = new natural.WordTokenizer();
+var tokenizer = require('./../tact/src/tokenizer.js');
 
 function reverse(s) {
   return s.split('').reverse().join('');

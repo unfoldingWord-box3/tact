@@ -1,13 +1,7 @@
-var natural = require('natural');
-var XRegExp = require('xregexp');
 var tools = require('./tools.js');
 var config = require('./config.js');
 var table = require('./table.js');
-var nonUnicodeLetter = XRegExp('\\PL+'); // var nonUnicodeLetter = XRegExp('[^\\pL]+');
-var tokenizer = new natural.RegexpTokenizer({pattern: nonUnicodeLetter});
-var unicodePunctuation = XRegExp("\\s*\\p{P}+\\s*");
-var segmenter = new natural.RegexpTokenizer({pattern: unicodePunctuation});
-var ngrams = natural.NGrams;
+var segmenter = require('./segmenter');
 
 exports.table = table;
 var permutations = {};
@@ -53,8 +47,8 @@ exports.generate = function(trainingSet, progress, callback) {
       var source = pair[0];
       var target = pair[1];
       if (config.segmentation.corpus) {
-        var sourceSegments = segmenter.tokenize(source);
-        var targetSegments = segmenter.tokenize(target);
+        var sourceSegments = segmenter.segment(source);
+        var targetSegments = segmenter.segment(target);
         if (sourceSegments.length == targetSegments.length) {
           sourceSegments.forEach(function(sourceSegment, _index){
             append(sourceSegment, targetSegments[_index]);

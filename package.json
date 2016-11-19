@@ -1,4 +1,3 @@
-
 {
   "name": "tact",
   "productName": "Translation Alignment Correction Tool",
@@ -48,7 +47,6 @@
     "browserify": "^13.1.1",
     "cli": "^1.0.1",
     "express": "4.13.1",
-    "natural": "^0.1.22",
     "react": "^15.4.0",
     "react-dom": "^15.4.0",
     "sqlite3": "^3.1.8",

@@ -1,15 +1,10 @@
-var natural = require('natural');
-var XRegExp = require('xregexp');
 var tools = require('./tools.js');
 var config = require('./config.js');
 var scoring = require('./scoring.js');
 var phraseTable = require('./phraseTable.js');
 var correctionsTable = require('./correctionsTable.js');
-var nonUnicodeLetter = XRegExp('\\PL+'); // var nonUnicodeLetter = XRegExp('[^\\pL]+');
-var tokenizer = new natural.RegexpTokenizer({pattern: nonUnicodeLetter});
-var unicodePunctuation = XRegExp("\\s*\\p{P}+\\s*");
-var segmenter = new natural.RegexpTokenizer({pattern: unicodePunctuation});
-var ngrams = natural.NGrams;
+var tokenizer = require('./tokenizer');
+var segmenter = require('./segmenter');
 
 // determine the combination of best rows for highest combined score
 var bestAlignments = function(sourceString, targetString, _alignmentData) {
@@ -115,8 +110,8 @@ var align = function(pairForAlignment, callback) {
   var alignment = []; // response
   var sourceString = pairForAlignment[0];
   var targetString = pairForAlignment[1];
-  var sourceSegments = segmenter.tokenize(sourceString);
-  var targetSegments = segmenter.tokenize(targetString);
+  var sourceSegments = segmenter.segment(sourceString);
+  var targetSegments = segmenter.segment(targetString);
   var segmentQueue = [];
   if (config.segmentation.aligner && sourceSegments.length == targetSegments.length) {
     sourceSegments.forEach(function(sourceSegment, _index){

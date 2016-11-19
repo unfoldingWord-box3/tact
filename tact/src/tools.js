@@ -1,9 +1,6 @@
-var natural = require('natural');
-var XRegExp = require('xregexp');
 var config = require('./config.js');
-var nonUnicodeLetter = XRegExp('\\PL+'); // var nonUnicodeLetter = XRegExp('[^\\pL]+');
-var tokenizer = new natural.RegexpTokenizer({pattern: nonUnicodeLetter});
-var ngrams = natural.NGrams;
+var tokenizer = require('./tokenizer.js');
+var ngram = require('./ngram.js');
 
 exports.sum = function(obj) {
   var sum = 0;
@@ -20,11 +17,11 @@ exports.forObject = function(object, callback) {
 }
 
 exports.countInArray = function(array, item) {
-    var count = 0;
-    for (var i = 0; i < array.length; i++) {
-        if (array[i] === item) { count++; }
-    }
-    return count;
+  var count = 0;
+  for (var i = 0; i < array.length; i++) {
+    if (array[i] === item) { count++; }
+  }
+  return count;
 }
 
 exports.ngram = function(string, n) {
@@ -32,7 +29,7 @@ exports.ngram = function(string, n) {
   var i;
   for (i=1; i < n+1; i++) {
     var tokens = tokenizer.tokenize(string);
-    var _ngrams = ngrams.ngrams(tokens, i);
+    var _ngrams = ngram.ngram(tokens, i);
     _ngrams.forEach(function(_ngramArray, _i) {
       var ngramString = _ngramArray.join(' ');
       ngramArray.push(ngramString);

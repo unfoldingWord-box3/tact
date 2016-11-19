@@ -2,8 +2,7 @@
 var chai = require('chai');
 var assert = chai.assert;
 var table = require('./../tact/src/table.js');
-var natural = require('natural');
-var tokenizer = new natural.WordTokenizer();
+var tokenizer = require('./../tact/src/tokenizer.js');
 
 var tableName = 'test';
 var permutations = {
