@@ -1,7 +1,7 @@
 // tests/aligner.js
 var chai = require('chai');
 var assert = chai.assert;
-var phraseTable = require('./../src/phraseTable.js');
+var phraseTable = require('./../tact/src/phraseTable.js');
 var natural = require('natural');
 var tokenizer = new natural.WordTokenizer();
 
