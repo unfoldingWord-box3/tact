@@ -1,10 +1,6 @@
 var tools = require('./tools.js');
 var config = require('./config.js');
-var natural = require('natural');
-var XRegExp = require('xregexp');
-var nonUnicodeLetter = XRegExp('\\PL+'); // var nonUnicodeLetter = XRegExp('[^\\pL]+');
-var tokenizer = new natural.RegexpTokenizer({pattern: nonUnicodeLetter});
-var ngrams = natural.NGrams;
+var tokenizer = require('./tokenizer');
 
 var ratioScore = function(row) {
   row.localSourceRatio = row.tally / row.localSourceTotal;
