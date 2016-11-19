@@ -5,7 +5,7 @@
   "description": "A simplistic way to statistically align words/phrases between two aligned languages including manual corrections.",
   "main": "index.js",
   "scripts": {
-    "test": "mocha ./tests/",
+    "test": "mocha ./tests/"
   },
   "repository": {
     "type": "git",
