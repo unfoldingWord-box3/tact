@@ -1,7 +1,7 @@
 // tests/corpusFaker.js
 var chai = require('chai');
 var assert = chai.assert;
-var corpusFaker = require('./../src/corpusFaker.js');
+var corpusFaker = require('./../tact/src/corpusFaker.js');
 var natural = require('natural');
 var tokenizer = new natural.WordTokenizer();
 
