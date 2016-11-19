@@ -6,6 +6,10 @@
   "main": "index.js",
   "scripts": {
     "test": "mocha ./tests/",
+    "build": "browserify -t babelify ./app/src/app.jsx -o ./app/public/js/app.js",
+    "watch": "watchify -t babelify ./app/src/app.jsx -o ./app/public/js/app.js",
+    "start": "node ./app/server.js",
+    "postinstall": "mkdir ./app/public/js & npm run build"
   },
   "repository": {
     "type": "git",
