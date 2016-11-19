@@ -3,3 +3,5 @@
 *.sqlite
 
 *.log
+
+app/public/js
