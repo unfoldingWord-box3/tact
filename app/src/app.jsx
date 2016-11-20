@@ -4,11 +4,36 @@ var ReactDOM = require('react-dom');
 var localforage = require('localforage');
 var tact = require('../../tact/tact.js');
 
+function Alignment(props) {
+  const alignment = props.alignment;
+  const phrases = alignment.map((phrase, index) =>
+    <ul key={index} className='phrase'>
+      <li>{phrase[0]}</li>
+      <li>{phrase[1]}</li>
+      <li>{phrase[2]}</li>
+    </ul>
+  );
+  return (
+    <div className='segment'>{phrases}</div>
+  );
+}
+
+function AlignmentsList(props) {
+  const alignments = props.alignments;
+  var i = 0;
+  const listAlignment = alignments.map((alignment, index) =>
+    <li className='alignment' key={index}><Alignment alignment={alignment} /></li>
+  );
+  return (
+    <ul id='alignments'>{listAlignment}</ul>
+  );
+}
 
 class CorpusForm extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
+      alignments: [],
       source: `BGB - Berean Greek Bible
       Βίβλος γενέσεως Ἰησοῦ Χριστοῦ υἱοῦ Δαυὶδ υἱοῦ Ἀβραάμ.
       Ἀβραὰμ ἐγέννησεν τὸν Ἰσαάκ, Ἰσαὰκ δὲ ἐγέννησεν τὸν Ἰακώβ, Ἰακὼβ δὲ ἐγέννησεν τὸν Ἰούδαν καὶ τοὺς ἀδελφοὺς αὐτοῦ,
@@ -46,6 +71,7 @@ class CorpusForm extends React.Component {
   handleSubmit(event) {
     event.preventDefault();
     console.log(this.state);
+    var _this = this;
     tact.corpus.pivot(this.state.source.split('\n'), this.state.target.split('\n'), function(corpus) {
       var corrections = [];
       function progress(percent) {
@@ -59,6 +85,7 @@ class CorpusForm extends React.Component {
           console.log('training complete');
           tact.aligning.align(corpus, progress, function(alignments) {
             console.log(alignments);
+            _this.setState({alignments: alignments});
           });
         }
       );
@@ -75,9 +102,13 @@ class CorpusForm extends React.Component {
         <textarea value={this.state.target} onChange={this.handleTargetChange} />
         <br />
         <input type="submit" value="Submit" />
+        <AlignmentsList alignments={this.state.alignments}/>
       </form>
     );
   }
 }
+
+
+
 
 ReactDOM.render(<CorpusForm />, document.getElementById('app'));
