@@ -1,62 +1,51 @@
 var config = require('./config.js');
 var tools = require('./tools.js');
-var db = require('./db.js').db;
 var async = require('async');
 var scoring = require('./scoring.js');
+var db = require('./db.js');
+
+var table = function(tableName) {
+  return db.localforage.createInstance({"name": tableName});
+}
 
 var cleanup = function(tableName, callback) {
-  db.run("DROP TABLE IF EXISTS " + tableName + ";", callback);
+  table(tableName).clear(callback);
 };
 exports.cleanup = cleanup;
 
 var init = function(tableName, callback) {
-  cleanup(tableName, function(err) {
-    db.run("CREATE TABLE IF NOT EXISTS " + tableName + " (source TEXT, targets TEXT);", callback);
-  });
+  callback(table(tableName));
 };
 exports.init = init;
 
-var bulkInsert = function(tableName, permutations, progress, callback) {
-  var clauses = [];
-  tools.forObject(permutations, function(source, targets){
-    clause = "('" + source + "','" + JSON.stringify(targets) + "')";
-    clauses.push(clause);
+exports.getCount = function(tableName, callback) {
+  table(tableName).length(function(err,length) {
+    callback(length);
   });
-  var statements = [];
-  do {
-    _clauses = clauses.splice(0,500);
-    var statement = "INSERT INTO " + tableName + " (source,targets) VALUES ";
-    statement = statement + _clauses.join(",") + ";";
-    statements.push(statement);
-  } while (clauses.length > 0);
-  var count = statements.length;
-  var completed = 0;
-  async.eachLimit(statements, 2,
-    function(statement, _callback) {
-      db.run(statement, function() {
-        completed ++;
-        var percent = completed/count;
-        progress(percent);
-        _callback(null);
+};
+
+var bulkInsert = function(tableName, permutations, progress, callback) {
+  var sourcePhrases = Object.keys(permutations);
+  var total = Object.keys(permutations).length
+  var index = 0;
+  async.mapLimit(sourcePhrases, 1,// increasing more than 2 slows it down. 2 is 1/20 faster
+    function(sourcePhrase, _callback) {
+      var targets = permutations[sourcePhrase];
+      table(tableName).setItem(sourcePhrase, targets, function(err) {
+        index ++;
+        progress(index/total);
+        _callback(null, err);
       });
     },
-    function(err) {
-      // Adding indices after inserts doubles speed of inserts
-      db.run("CREATE UNIQUE INDEX SourceIndex ON " + tableName + " (source)", callback);
+    function(err, errs) {
+      callback();
     }
   );
 };
 exports.bulkInsert = bulkInsert;
 
-exports.getCount = function(tableName, callback) {
-  db.all("SELECT COUNT(*) AS count FROM " + tableName + ";", function(err, all){
-    callback( all === undefined ? -1 : all[0].count );
-  });
-};
-
-var calculateRows = function(row, tableName, sourceString, targetString, sourcePhrases, targetPhrases) {
+var calculateRows = function(source, targets, tableName, sourceString, targetString, sourcePhrases, targetPhrases) {
   var rows = []
-  var targets = JSON.parse(row.targets);
   var globalSourceTotal = 0;
   var localSourceTotal = 0;
   tools.forObject(targets, function(target, tally) {
@@ -67,8 +56,8 @@ var calculateRows = function(row, tableName, sourceString, targetString, sourceP
   });
   tools.forObject(targets, function(target, tally) {
     if (targetPhrases.indexOf(target) > -1) {
-      var _row = {
-        source: row.source, target: target, tally: tally,
+      var row = {
+        source: source, target: target, tally: tally,
         globalSourceTotal: globalSourceTotal,
         localSourceTotal: localSourceTotal,
         globalTargetTotal: 0,
@@ -77,21 +66,26 @@ var calculateRows = function(row, tableName, sourceString, targetString, sourceP
         sourceUsed: false,
         correction: (tableName == 'corrections')
       };
-      _row = scoring.score(sourceString, targetString, _row);
-      rows.push(_row);
+      row = scoring.score(sourceString, targetString, row);
+      rows.push(row);
     }
   });
   return rows;
 };
 
 var phrases = function(tableName, sourceString, targetString, sourcePhrases, targetPhrases, callback) {
-  var rows = [];
-  statement = "SELECT * FROM " + tableName + " WHERE source IN ('" + sourcePhrases.join("','") + "');"
-  db.each(statement, function(err, row) {
-    _rows = calculateRows(row, tableName, sourceString, targetString, sourcePhrases, targetPhrases);
-    rows = rows.concat(_rows);
-  }, function() {
-    callback(rows);
+  var alignments = [];
+  async.mapLimit(sourcePhrases, 1, function(sourcePhrase, cb) {
+    table(tableName).getItem(sourcePhrase).then(function(targets) {
+      if (targets !== null) {
+        var rows = calculateRows(sourcePhrase, targets, tableName, sourceString, targetString, sourcePhrases, targetPhrases);
+        alignments = alignments.concat(rows);
+      }
+      cb();
+    });
+  }, function(err) {
+    if (err) return console.log(err);
+    callback(alignments);
   });
 };
 exports.phrases = phrases;

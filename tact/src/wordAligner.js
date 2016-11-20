@@ -39,7 +39,7 @@ var isNeeded = function(row, neededSource, neededTarget) {
       neededTarget.search(regexTarget) == -1) {
         needed = false;
       }
-  return needed
+  return needed;
 }
 // penalize remaining alignments so that they are less likely to be selected
 var penalizeConflictingAlignments = function(row, available, neededSource, neededTarget) {
@@ -47,7 +47,7 @@ var penalizeConflictingAlignments = function(row, available, neededSource, neede
     var needed = isNeeded(_row, neededSource, neededTarget);
     if (!needed && !_row.correction) {
       available[index].conflict = true;
-      newScore = row.score/config.penalties.conflict;
+      var newScore = row.score/config.penalties.conflict;
       available[index].score = Math.round( newScore * 1000) / 1000
     }
   });
@@ -61,10 +61,10 @@ var bestAlignment = function(alignmentData) {
 // this function could be optimized by passing in alignment as an object instead of array
 // sourceTokens = [tokens...], alignment = [source, target, score]
 var alignmentBySourceTokens = function(_sourceTokens, alignment) {
-  sourceTokens = _sourceTokens.slice(0);
+  var sourceTokens = _sourceTokens.slice(0);
   var orderedAlignment = []; // response
   // transform alignment into object to look up ngrams
-  unorderedAlignment = {};
+  var unorderedAlignment = {};
   alignment.forEach(function(row, index) {
     if (unorderedAlignment[row[0]] === undefined) {
       unorderedAlignment[row[0]] = row;
@@ -105,6 +105,18 @@ var alignmentBySourceTokens = function(_sourceTokens, alignment) {
   if (notfound.length > 0) console.log("notfound: ", notfound);
   return orderedAlignment;
 }
+
+var alignments = function(sourceString, targetString, callback) {
+  var _alignments = [];
+  phraseTable.prune(sourceString, targetString, function(_phraseTable) {
+    correctionsTable.prune(sourceString, targetString, function(_correctionsTable) {
+      _alignments = _correctionsTable.concat(_phraseTable);
+      callback(_alignments);
+    });
+  });
+};
+exports.alignments = alignments;
+
 // main alignment function that calls the other functions internally
 var align = function(pairForAlignment, callback) {
   var alignment = []; // response
@@ -123,18 +135,15 @@ var align = function(pairForAlignment, callback) {
   segmentQueue.forEach(function(segmentPair, index) {
     var _sourceString = segmentPair[0];
     var _targetString = segmentPair[1];
-    phraseTable.prune(_sourceString, _targetString, function(_phraseTable) {
-      correctionsTable.prune(_sourceString, _targetString, function(_correctionsTable) {
-        alignmentData = _correctionsTable.concat(_phraseTable);
-        // process of elimination
-        _alignment = bestAlignments(_sourceString, _targetString, alignmentData);
-        // reorder alignments to match source order
-        _alignment = alignmentBySourceTokens(tokenizer.tokenize(_sourceString), _alignment);
-        _alignment.forEach(function(row, index) {
-          alignment.push(row);
-        });
-        callback(alignment);
+    alignments(_sourceString, _targetString, function(_alignments) {
+      // process of elimination
+      var _alignment = bestAlignments(_sourceString, _targetString, _alignments);
+      // reorder alignments to match source order
+      _alignment = alignmentBySourceTokens(tokenizer.tokenize(_sourceString), _alignment);
+      _alignment.forEach(function(row, index) {
+        alignment.push(row);
       });
+      callback(alignment);
     });
   });
 };

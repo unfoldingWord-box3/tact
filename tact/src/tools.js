@@ -2,6 +2,13 @@ var config = require('./config.js');
 var tokenizer = require('./tokenizer.js');
 var ngram = require('./ngram.js');
 
+exports.unique = function(array) {
+    var o = {}, i, l = array.length, r = [];
+    for(i=0; i<l;i+=1) o[array[i]] = array[i];
+    for(i in o) r.push(o[i]);
+    return r;
+};
+
 exports.sum = function(obj) {
   var sum = 0;
   for( var el in obj ) {
@@ -25,7 +32,7 @@ exports.countInArray = function(array, item) {
 }
 
 exports.ngram = function(string, n) {
-  ngramArray = []
+  var ngramArray = []
   var i;
   for (i=1; i < n+1; i++) {
     var tokens = tokenizer.tokenize(string);
@@ -35,7 +42,7 @@ exports.ngram = function(string, n) {
       ngramArray.push(ngramString);
     });
   }
-  return ngramArray;
+  return exports.unique(ngramArray);
 }
 
 if (typeof Object.merge !== 'function') {

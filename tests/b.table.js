@@ -53,10 +53,10 @@ describe('table', function() {
       done();
     });
   });
-  it('cleanup() should yield an table count of -1', function(done) {
+  it('cleanup() should yield an table count of 0', function(done) {
     table.cleanup(tableName, function() {
       table.getCount(tableName, function(count) {
-        assert.equal(count, -1);
+        assert.equal(count, 0);
         done();
       });
     });

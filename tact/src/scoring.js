@@ -17,8 +17,8 @@ exports.ratioScore = ratioScore;
 var ngramScore = function(row) {
   var sourceNgramCount = tokenizer.tokenize(row.source).length;
   var targetNgramCount = tokenizer.tokenize(row.target).length;
-  sourceNgramScore = config.ngrams.sourceScores[sourceNgramCount];
-  targetNgramScore = config.ngrams.targetScores[targetNgramCount];
+  var sourceNgramScore = config.ngrams.sourceScores[sourceNgramCount];
+  var targetNgramScore = config.ngrams.targetScores[targetNgramCount];
   row.ngramScore = (sourceNgramScore + targetNgramScore) / 2
   if (row.correction) {
     var deltaNgramMax = Math.abs(config.ngrams.targetMax - sourceNgramCount);
