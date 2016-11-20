@@ -39,7 +39,7 @@ var isNeeded = function(row, neededSource, neededTarget) {
       neededTarget.search(regexTarget) == -1) {
         needed = false;
       }
-  return needed
+  return needed;
 }
 // penalize remaining alignments so that they are less likely to be selected
 var penalizeConflictingAlignments = function(row, available, neededSource, neededTarget) {

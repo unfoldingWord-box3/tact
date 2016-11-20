@@ -28,7 +28,7 @@ var bulkInsert = function(tableName, permutations, progress, callback) {
   var sourcePhrases = Object.keys(permutations);
   var total = Object.keys(permutations).length
   var index = 0;
-  async.mapSeries(sourcePhrases,// increasing more than 2 slows it down. 2 is 1/20 faster
+  async.mapLimit(sourcePhrases, 1,// increasing more than 2 slows it down. 2 is 1/20 faster
     function(sourcePhrase, _callback) {
       var targets = permutations[sourcePhrase];
       table(tableName).setItem(sourcePhrase, targets, function(err) {
@@ -75,7 +75,7 @@ var calculateRows = function(source, targets, tableName, sourceString, targetStr
 
 var phrases = function(tableName, sourceString, targetString, sourcePhrases, targetPhrases, callback) {
   var alignments = [];
-  async.mapLimit(sourcePhrases, 2, function(sourcePhrase, cb) {
+  async.mapLimit(sourcePhrases, 1, function(sourcePhrase, cb) {
     table(tableName).getItem(sourcePhrase).then(function(targets) {
       if (targets !== null) {
         var rows = calculateRows(sourcePhrase, targets, tableName, sourceString, targetString, sourcePhrases, targetPhrases);
