@@ -10,11 +10,6 @@ function reverse(s) {
   return s.split('').reverse().join('');
 }
 
-function check(done, f) {
-  try { f(); done(); }
-  catch(e) { done(e); }
-}
-
 // corpus
 var sources = [
   "hello", "hello george", "hello taco", "hello all", "say hello", "no hello", "say hello to all",

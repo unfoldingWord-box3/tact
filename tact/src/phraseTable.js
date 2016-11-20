@@ -11,7 +11,9 @@ exports.tableName = tableName;
 var prune = function(sourceString, targetString, callback) {
   var sourceNgramArray = tools.ngram(sourceString, config.ngrams.sourceMax);
   var targetNgramArray = tools.ngram(targetString, config.ngrams.targetMax);
-  table.phrases(tableName, sourceString, targetString, sourceNgramArray, targetNgramArray, callback);
+  table.phrases(tableName, sourceString, targetString, sourceNgramArray, targetNgramArray, function(phrases) {
+    callback(phrases);
+  });
 };
 exports.prune = prune;
 

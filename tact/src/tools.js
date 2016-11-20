@@ -25,7 +25,7 @@ exports.countInArray = function(array, item) {
 }
 
 exports.ngram = function(string, n) {
-  ngramArray = []
+  var ngramArray = []
   var i;
   for (i=1; i < n+1; i++) {
     var tokens = tokenizer.tokenize(string);
