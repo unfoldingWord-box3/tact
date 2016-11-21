@@ -3,18 +3,27 @@ var React = require('react');
 var ReactDOM = require('react-dom');
 var localforage = require('localforage');
 var tact = require('../../tact/tact.js');
+var FormGroup = require('react-bootstrap').FormGroup;
+var Table = require('react-bootstrap').Table;
+var ControlLabel = require('react-bootstrap').ControlLabel;
+var FormControl = require('react-bootstrap').FormControl;
+var ListGroup = require('react-bootstrap').ListGroup;
+var ListGroupItem = require('react-bootstrap').ListGroupItem;
+var ProgressBar = require('react-bootstrap').ProgressBar;
 
 function Alignment(props) {
   const alignment = props.alignment;
   const phrases = alignment.map((phrase, index) =>
-    <ul key={index} className='phrase'>
-      <li>{phrase[0]}</li>
-      <li>{phrase[1]}</li>
-      <li>{phrase[2]}</li>
-    </ul>
+    <td key={index}>
+      <ListGroup className='phrase'>
+        <ListGroupItem>{phrase[0]}</ListGroupItem>
+        <ListGroupItem>{phrase[1]}</ListGroupItem>
+        <ListGroupItem>{phrase[2]}</ListGroupItem>
+      </ListGroup>
+    </td>
   );
   return (
-    <div className='segment'>{phrases}</div>
+    <tr className='segment'>{phrases}</tr>
   );
 }
 
@@ -22,10 +31,14 @@ function AlignmentsList(props) {
   const alignments = props.alignments;
   var i = 0;
   const listAlignment = alignments.map((alignment, index) =>
-    <li className='alignment' key={index}><Alignment alignment={alignment} /></li>
+    <tbody className='alignment' key={index}>
+      <Alignment alignment={alignment} />
+    </tbody>
   );
   return (
-    <ul id='alignments'>{listAlignment}</ul>
+    <Table striped bordered id='alignments'>
+      {listAlignment}
+    </Table>
   );
 }
 
@@ -33,6 +46,8 @@ class CorpusForm extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
+      trainingProgress: 0,
+      aligningProgress: 0,
       alignments: [],
       source: `BGB - Berean Greek Bible
       Βίβλος γενέσεως Ἰησοῦ Χριστοῦ υἱοῦ Δαυὶδ υἱοῦ Ἀβραάμ.
@@ -78,15 +93,24 @@ class CorpusForm extends React.Component {
         console.log(percent);
       };
       console.log('corpus was submitted: \n', corpus);
-      tact.training.train(corpus, corrections, progress, progress,
+      tact.training.train(corpus, corrections,
+        function(percent) {
+          _this.setState({trainingProgress: percent});
+        },
+        progress,
         function() { console.log('corpus complete'); },
         function() { console.log('corrections complete'); },
         function() {
           console.log('training complete');
-          tact.aligning.align(corpus, progress, function(alignments) {
-            console.log(alignments);
-            _this.setState({alignments: alignments});
-          });
+          tact.aligning.align(corpus,
+            function(percent) {
+              _this.setState({aligningProgress: percent})
+            },
+            function(alignments) {
+              console.log(alignments);
+              _this.setState({alignments: alignments});
+            }
+          );
         }
       );
     });
@@ -95,20 +119,34 @@ class CorpusForm extends React.Component {
   render() {
     return (
       <form onSubmit={this.handleSubmit}>
-        Source Lines:
-        <textarea value={this.state.source} onChange={this.handleSourceChange} />
-        <br />
-        Target Lines:
-        <textarea value={this.state.target} onChange={this.handleTargetChange} />
-        <br />
+        <FormGroup controlId="sourceCorpus">
+          <ControlLabel>Source Lines:</ControlLabel>
+          <FormControl componentClass="textarea" placeholder={this.state.source} onChange={this.handleSourceChange} />
+        </FormGroup>
+        <FormGroup controlId="targetCorpus">
+          <ControlLabel>Target Lines:</ControlLabel>
+          <FormControl componentClass="textarea" placeholder={this.state.target} onChange={this.handleTargetChange} />
+        </FormGroup>
         <input type="submit" value="Submit" />
-        <AlignmentsList alignments={this.state.alignments}/>
+        <Progress training={this.state.trainingProgress} aligning={this.state.aligningProgress} />
+        <AlignmentsList alignments={this.state.alignments} />
       </form>
     );
   }
 }
 
-
-
+function Progress(props) {
+  const training = props.training * 50;
+  const aligning = props.aligning * 50;
+  const progress = (
+    <ProgressBar>
+      <ProgressBar striped bsStyle="warning" now={training} key={1} />
+      <ProgressBar striped bsStyle="success" now={aligning} key={2} />
+    </ProgressBar>
+  );
+  return (
+    <div className='progress'>{progress}</div>
+  );
+}
 
 ReactDOM.render(<CorpusForm />, document.getElementById('app'));
