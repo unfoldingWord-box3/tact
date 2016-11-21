@@ -8,7 +8,7 @@ var align = function(alignmentPairs, progress, callback) {
   var count = alignmentPairs.length;
   var completed = 0;
   // due to sqlite single being threaded, while sql is using i/o, we can work on another.
-  async.mapLimit(alignmentPairs, 2, // increasing more than 2 slows it down. 2 is 1/20 faster
+  async.mapLimit(alignmentPairs, 1, // increasing more than 2 slows it down. 2 is 1/20 faster
     function(alignmentPair, _callback) {
       tact.wordAligner.align(alignmentPair, function(alignment) {
         completed ++;
