@@ -14,7 +14,7 @@ var pivot = function(sources, targets, callback) {
   var corpus = [];
   sources.forEach(function(sourceString, index) {
     var targetString = targets[index];
-    corpus.push([sourceString.toLowerCase(), targetString.toLowerCase()]);
+    corpus.push([sourceString.normalize('NFKC').toLowerCase(), targetString.normalize('NFKC').toLowerCase()]);
   });
   callback(corpus);
 };

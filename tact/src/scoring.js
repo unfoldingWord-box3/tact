@@ -4,11 +4,9 @@ var tokenizer = require('./tokenizer');
 
 var ratioScore = function(row) {
   row.localSourceRatio = row.tally / row.localSourceTotal;
-  row.localTargetRatio = 0 // row.tally / row.localTargetTotal;
   row.globalSourceRatio = Math.round(row.tally / row.globalSourceTotal * 1000) / 1000;
-  row.globalTargetRatio = 0 // Math.round(row.tally / row.globalTargetTotal * 1000) / 1000;
   row.sourceUniqueness = Math.round(row.localSourceTotal / row.globalSourceTotal * 1000) / 1000;
-  row.targetUniqueness = 0 // Math.round(row.localTargetTotal / row.globalTargetTotal * 1000) / 1000;
+  row.ratioScore = (row.localSourceRatio * row.sourceUniqueness + row.globalSourceRatio * (1-row.sourceUniqueness))
   return row;
 };
 exports.ratioScore = ratioScore;
@@ -66,12 +64,7 @@ exports.score = function(sourceString, targetString, row) {
     row.weightSum = row.weightSum + config.weights.longerNgrams * (config.corrections.applyLongerNgramsFirst - 1);
   }
   row.score = (
-    config.weights.localSourceRatio * row.localSourceRatio +
-    config.weights.localTargetRatio * row.localTargetRatio +
-    config.weights.globalSourceRatio * row.globalSourceRatio +
-    config.weights.globalTargetRatio * row.globalTargetRatio +
-    config.weights.sourceUniqueness * row.sourceUniqueness +
-    config.weights.targetUniqueness * row.targetUniqueness +
+    config.weights.ratio * row.ratioScore +
     config.weights.longerNgrams * (row.correction ? config.corrections.applyLongerNgramsFirst : 1) * row.ngramScore +
     config.weights.positionDelta * row.positionDeltaScore +
     config.weights.occurrenceDelta * row.occurrenceDeltaScore +
