@@ -5,12 +5,15 @@ var ListGroupItem = require('react-bootstrap').ListGroupItem;
 
 function Alignment(props) {
   const alignment = props.alignment;
+  function className(score) {
+    return ( (score > 1) ? 'correction' : ( score < 0.1 ? 'conflict' : 'suggestion' ) )
+  }
   const phrases = alignment.map((phrase, index) =>
     <td key={index}>
       <ListGroup className='phrase'>
         <ListGroupItem>{phrase[0]}</ListGroupItem>
         <ListGroupItem>{phrase[1]}</ListGroupItem>
-        <ListGroupItem>{phrase[2]}</ListGroupItem>
+        <ListGroupItem className={className(phrase[2])}>{phrase[2]}</ListGroupItem>
       </ListGroup>
     </td>
   );

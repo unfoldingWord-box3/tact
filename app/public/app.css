@@ -1,3 +1,9 @@
 .form-group-sm textarea.form-control {
     height: 16em;
 }
+li.correction.list-group-item {
+    color: green;
+}
+li.conflict.list-group-item {
+    color: red;
+}
