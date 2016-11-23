@@ -180,13 +180,13 @@ class CorpusForm extends React.Component {
             <Col xs={6} md={4}>
               <FormGroup bsSize="small" controlId="sourceCorpus">
                 <ControlLabel>Source Lines:</ControlLabel>
-                <FormControl componentClass="textarea" placeholder={this.state.corpusSource} onChange={this.handleCorpusSourceChange} />
+                <FormControl componentClass="textarea" value={this.state.corpusSource} onChange={this.handleCorpusSourceChange} />
               </FormGroup>
             </Col>
             <Col xs={6} md={4}>
               <FormGroup bsSize="small" controlId="targetCorpus">
                 <ControlLabel>Target Lines:</ControlLabel>
-                <FormControl componentClass="textarea" placeholder={this.state.corpusTarget} onChange={this.handleCorpusTargetChange} />
+                <FormControl componentClass="textarea" value={this.state.corpusTarget} onChange={this.handleCorpusTargetChange} />
               </FormGroup>
             </Col>
           </Row>
@@ -194,13 +194,13 @@ class CorpusForm extends React.Component {
             <Col xs={6} md={4}>
               <FormGroup bsSize="small" controlId="sourceCorrections">
                 <ControlLabel>Source Corrections:</ControlLabel>
-                <FormControl componentClass="textarea" placeholder={this.state.correctionsSource} onChange={this.handleCorrectionsSourceChange} />
+                <FormControl componentClass="textarea" value={this.state.correctionsSource} onChange={this.handleCorrectionsSourceChange} />
               </FormGroup>
             </Col>
             <Col xs={6} md={4}>
               <FormGroup bsSize="small" controlId="targetCorrections">
                 <ControlLabel>Target Corrections:</ControlLabel>
-                <FormControl componentClass="textarea" placeholder={this.state.correctionsTarget} onChange={this.handleCorrectionsTargetChange} />
+                <FormControl componentClass="textarea" value={this.state.correctionsTarget} onChange={this.handleCorrectionsTargetChange} />
               </FormGroup>
             </Col>
           </Row>
