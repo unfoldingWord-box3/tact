@@ -28,12 +28,7 @@ exports.pruning = {
 }
 
 exports.weights = { // weighted averaged (Ar*Aw + Br*Bw + Cr*Cw)/Sum(weights)
-  localSourceRatio: 7,
-  localTargetRatio: 0,
-  globalSourceRatio: 3,
-  globalTargetRatio: 0,
-  sourceUniqueness: 4,
-  targetUniqueness: 0,
+  ratio: 10,
   longerNgrams: 3,
   occurrenceDelta: 2,
   positionDelta: 4,
