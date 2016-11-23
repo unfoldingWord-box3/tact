@@ -33,6 +33,20 @@ var bulkInsert = function(tableName, permutations, progress, callback) {
   async.mapLimit(sourcePhrases, 2,// increasing more than 2 slows it down. 2 is 1/20 faster
     function(sourcePhrase, _callback) {
       var targets = permutations[sourcePhrase];
+      if (tableName !== 'corrections') {
+        var _oneoffs = [];
+        var _ceil = 0;
+        tools.forObject(targets, function(target, tally) {
+          if (tally > _ceil) _ceil = tally;
+          if (tally == 1) _oneoffs.push(target);
+        });
+        if (_ceil > config.pruning.oneOffCollapseMinimumCeiling) {
+          targets['_oneoffs'] = _oneoffs.length;
+          _oneoffs.forEach(function(target) {
+            delete targets[target];
+          });
+        }
+      }
       table(tableName).setItem(sourcePhrase, targets, function(err) {
         index ++;
         progress(index/total);

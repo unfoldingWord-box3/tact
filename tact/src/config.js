@@ -23,6 +23,10 @@ exports.corrections = {
   applyLongerNgramsFirst: 10 // multiplier for longerNgrams weight
 };
 
+exports.pruning = {
+  oneOffCollapseMinimumCeiling: 2
+}
+
 exports.weights = { // weighted averaged (Ar*Aw + Br*Bw + Cr*Cw)/Sum(weights)
   localSourceRatio: 7,
   localTargetRatio: 0,
