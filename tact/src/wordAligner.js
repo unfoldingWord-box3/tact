@@ -18,8 +18,8 @@ var bestAlignments = function(sourceString, targetString, _alignmentData) {
     });
 
     var best = bestAlignment(available);
-    var regexSource = new RegExp("( |^)+?" + best.source + "( |$)+?", '');
-    var regexTarget = new RegExp("( |^)+?" + best.target + "( |$)+?", '');
+    var regexSource = new RegExp("( |^)+?" + best.source + "( |$)+?", 'g');  // using g replaces all assumes all source occurences align to same target
+    var regexTarget = new RegExp("( |^)+?" + best.target + "( |$)+?", 'g');
     if (best !== undefined && neededSource.match(regexSource) != null) {
       neededSource = neededSource.replace(regexSource, '  ');
       neededTarget = neededTarget.replace(regexTarget, '  ');
@@ -66,7 +66,7 @@ var alignmentBySourceTokens = function(_sourceTokens, alignment) {
   // transform alignment into object to look up ngrams
   var unorderedAlignment = {};
   alignment.forEach(function(row, index) {
-    if (unorderedAlignment[row[0]] === undefined) {
+    if (unorderedAlignment[row[0]] === undefined || row[2] > unorderedAlignment[row[0]][2]) {
       unorderedAlignment[row[0]] = row;
     }
   });
@@ -89,6 +89,14 @@ var alignmentBySourceTokens = function(_sourceTokens, alignment) {
       found = unorderedAlignment[queue.join(' ')];
       // see if queue is found and push to orderedAlignment array
       if (found !== undefined) {
+        // check to see if first word has a higher confidence than the phrase.
+        if ( queue.length > 1 ) {
+          var firstWord = unorderedAlignment[queue.shift()];
+          if (firstWord !== undefined && firstWord[2] > found[2]) {
+            found = firstWord;
+            sourceTokens = queue.concat(sourceTokens);
+          }
+        }
         // Push each found alignment in order found to response array
         orderedAlignment.push(found);
         queue = [];
