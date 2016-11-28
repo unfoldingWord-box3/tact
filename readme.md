@@ -1,4 +1,5 @@
 [ ![Codeship Status for unfoldingWord-dev/tact](https://app.codeship.com/projects/d2282ce0-8d68-0134-e553-0a1d76d80454/status?branch=master)](https://app.codeship.com/projects/184977)
+![Travis-CI Status for unfoldingWord-dev/tact](https://travis-ci.org/unfoldingWord-dev/tact.svg?branch=master)
 
 ## TACT: Translation Alignment Correction Tool
 Javascript based nlp statistical word/phrase aligner.
