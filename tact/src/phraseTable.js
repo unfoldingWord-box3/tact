@@ -44,6 +44,7 @@ exports.generate = function(trainingSet, progress, callback) {
     // loop through trainingSet
     // generate ngrams of source and target
     var count = trainingSet.length;
+    console.log("calculating permutations...");
     trainingSet.forEach(function(pair, index) {
       progress((index+1)/count);
       var source = pair[0];
@@ -63,6 +64,7 @@ exports.generate = function(trainingSet, progress, callback) {
       }
     });
     trainingSet = [];
+    console.log("storing permutations...");
     table.bulkInsert(tableName, permutations, progress, callback);
   });
 };

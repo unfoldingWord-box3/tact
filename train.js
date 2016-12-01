@@ -28,6 +28,7 @@ tact.corpus.parseFiles(options.sourceCorrectionsFile, options.targetCorrectionsF
       },
       function() {
         // console.timeEnd('training-1');
+        console.log('trained');
       }
     );
   });
