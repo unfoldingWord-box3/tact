@@ -1,11 +1,13 @@
-var config = require('./config.js');
-var tools = require('./tools.js');
-var async = require('async');
-var scoring = require('./scoring.js');
-var db = require('./db.js');
+var config = require('../config.js')
+var tools = require('./tools.js')
+var async = require('async')
+var scoring = require('./scoring.js')
+var db = require('./db.js')
+
+db.init()
 
 var table = function(tableName) {
-  return db.localforage.createInstance({"name": tableName});
+  return db.localforage.createInstance({"name": config.global.sourceLanguage+'-'+config.global.targetLanguage+'-'+tableName});
 }
 
 var cleanup = function(tableName, callback) {
@@ -33,20 +35,6 @@ var bulkInsert = function(tableName, permutations, progress, callback) {
   async.mapLimit(sourcePhrases, 2,// increasing more than 2 slows it down. 2 is 1/20 faster
     function(sourcePhrase, _callback) {
       var targets = permutations[sourcePhrase];
-      if (tableName !== 'corrections') {
-        var _oneoffs = [];
-        var _ceil = 0;
-        tools.forObject(targets, function(target, tally) {
-          if (tally > _ceil) _ceil = tally;
-          if (tally == 1) _oneoffs.push(target);
-        });
-        if (_ceil > config.pruning.oneOffCollapseMinimumCeiling) {
-          targets['_oneoffs'] = _oneoffs.length;
-          _oneoffs.forEach(function(target) {
-            delete targets[target];
-          });
-        }
-      }
       table(tableName).setItem(sourcePhrase, targets, function(err) {
         index ++;
         progress(index/total);
@@ -64,16 +52,20 @@ var calculateRows = function(source, targets, tableName, sourceString, targetStr
   var rows = []
   var globalSourceTotal = 0;
   var localSourceTotal = 0;
-  tools.forObject(targets, function(target, tally) {
+  tools.forObject(targets, function(target, staticScores) {
+    var tally = staticScores.length;
     globalSourceTotal = globalSourceTotal + tally;
     if (targetPhrases.indexOf(target) > -1) {
       localSourceTotal = localSourceTotal + tally;
     }
   });
-  tools.forObject(targets, function(target, tally) {
+  tools.forObject(targets, function(target, staticScores) {
+    var tally = staticScores.length;
+    var staticScore = tools.averageObjects(staticScores);
     if (targetPhrases.indexOf(target) > -1) {
       var row = {
         source: source, target: target, tally: tally,
+        staticScore: staticScore,
         globalSourceTotal: globalSourceTotal,
         localSourceTotal: localSourceTotal,
         globalTargetTotal: 0,
@@ -89,7 +81,9 @@ var calculateRows = function(source, targets, tableName, sourceString, targetStr
   return rows;
 };
 
-var phrases = function(tableName, sourceString, targetString, sourcePhrases, targetPhrases, callback) {
+var phrases = function(tableName, sourceString, targetString, callback) {
+  var sourcePhrases = tools.ngram(sourceString, config.global.ngram.source);
+  var targetPhrases = tools.ngram(targetString, config.global.ngram.target);
   var alignments = [];
   async.mapLimit(sourcePhrases, 2, function(sourcePhrase, cb) {
     table(tableName).getItem(sourcePhrase).then(function(targets) {

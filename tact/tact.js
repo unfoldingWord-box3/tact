@@ -1,9 +1,16 @@
-exports.phraseTable = require('./src/phraseTable.js');
-exports.correctionsTable = require('./src/correctionsTable.js');
-exports.wordAligner = require('./src/wordAligner.js');
-exports.corpus = require('./src/corpus.js');
-exports.segmenter = require('./src/segmenter.js');
-exports.tokenizer = require('./src/tokenizer.js');
+var tact = {
+  config: require('./config.js'),
 
-exports.training = require('./training.js');
-exports.aligning = require('./aligning.js');
+  table: require('./src/table.js'),
+  phraseTable: require('./src/phraseTable.js'),
+  correctionsTable: require('./src/correctionsTable.js'),
+  wordAligner: require('./src/wordAligner.js'),
+  corpus: require('./src/corpus.js'),
+  segmenter: require('./src/segmenter.js'),
+  tokenizer: require('./src/tokenizer.js'),
+
+  training: require('./training.js'),
+  aligning: require('./aligning.js')
+}
+
+exports = module.exports = tact

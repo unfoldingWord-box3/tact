@@ -1,8 +1,7 @@
 // tests/aligner.js
-var chai = require('chai');
-var assert = chai.assert;
-var phraseTable = require('./../tact/src/phraseTable.js');
-var tokenizer = require('./../tact/src/tokenizer.js');
+var chai = require('chai')
+var assert = chai.assert
+var tact = require('./../tact/tact.js')
 
 function reverse(s) {
   return s.split('').reverse().join('');
@@ -21,22 +20,22 @@ var pairForAlignment = ["hello taco world", "dlrow ocat olleh"];
 
 describe('phraseTable', function() {
   it('generate() should add rows to the table', function(done) {
-    phraseTable.generate(corpus, function(){}, function() {
-      phraseTable.table.getCount(phraseTable.tableName, function(count) {
+    tact.phraseTable.generate(corpus, function(){}, function() {
+      tact.phraseTable.table.getCount(tact.phraseTable.tableName, function(count) {
         assert.equal(count, 42);
         done();
       });
     });
   });
   it('prune() with one word pair should return 1 row', function(done) {
-    phraseTable.prune('hello', 'olleh', function(all) {
+    tact.phraseTable.prune('hello', 'olleh', function(all) {
       assert.equal(all.length, 1);
       done();
     });
   });
   it('cleanup() should yield an table count of 0', function(done) {
-    phraseTable.table.cleanup(phraseTable.tableName, function() {
-      phraseTable.table.getCount(phraseTable.tableName, function(count) {
+    tact.phraseTable.table.cleanup(tact.phraseTable.tableName, function() {
+      tact.phraseTable.table.getCount(tact.phraseTable.tableName, function(count) {
         assert.equal(count, 0);
         done();
       });

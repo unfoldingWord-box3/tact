@@ -24,20 +24,11 @@ sources.forEach(function(string, index){ targets.push(reverse(string)); });
 var corrections = [];
 sources.forEach(function(string, index){ corrections.push([string, targets[index]]); });
 
-describe('training.train', function() {
+describe('aligning.align', function() {
   it('should populate the corpus and corrections tables', function(done) {
-    function progress() {};
-    function corpusCallback() {};
-    function correctionsCallback() {};
-    function callback() {
-      tact.phraseTable.table.getCount(tact.phraseTable.tableName, function(count) {
-        assert.equal(count, 42);
-        tact.correctionsTable.table.getCount(tact.correctionsTable.tableName, function(count) {
-          assert.equal(count, 2);
-          done();
-        });
-      });
-    };
-    tact.training.train(corpus, corrections, progress, progress, corpusCallback, correctionsCallback, callback);
+    function progress(){};
+    tact.aligning.align(corpus, progress, function(alignments) {
+      done();
+    });
   });
 });

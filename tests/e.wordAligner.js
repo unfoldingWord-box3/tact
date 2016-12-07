@@ -1,10 +1,7 @@
 // tests/aligner.js
-var chai = require('chai');
-var assert = chai.assert;
-var phraseTable = require('./../tact/src/phraseTable.js');
-var correctionsTable = require('./../tact/src/correctionsTable.js');
-var wordAligner = require('./../tact/src/wordAligner.js');
-var tokenizer = require('./../tact/src/tokenizer.js');
+var chai = require('chai')
+var assert = chai.assert
+var tact = require('./../tact/tact.js')
 
 function reverse(s) {
   return s.split('').reverse().join('');
@@ -31,10 +28,10 @@ var pairForAlignment = ["hello taco world", "dlrow ocat olleh"];
 
 describe('wordAligner.align', function() {
   it('align should return an array for each source word', function(done) {
-    phraseTable.generate(corpus, function(){}, function() {
-      correctionsTable.generate(corrections, function(){}, function() {
-        wordAligner.align(pairForAlignment, function(alignment) {
-          var count = tokenizer.tokenize(pairForAlignment[0]).length;
+    tact.phraseTable.generate(corpus, function(){}, function() {
+      tact.correctionsTable.generate(corrections, function(){}, function() {
+        tact.wordAligner.align(pairForAlignment, function(alignment) {
+          var count = tact.tokenizer.tokenize(pairForAlignment[0]).length;
           assert.equal(count, alignment.length);
           done();
         });
@@ -42,7 +39,7 @@ describe('wordAligner.align', function() {
     });
   });
   it('align should return an object of which values are an array of string and number.', function(done) {
-    wordAligner.align(pairForAlignment, function(alignments) {
+    tact.wordAligner.align(pairForAlignment, function(alignments) {
       var alignment = alignments[0];
       assert.isArray(alignment);
       var sourceNgram = alignment[0];
@@ -59,8 +56,8 @@ describe('wordAligner.align', function() {
     var correctionCorpus = [
       ["hello","olleh"]
     ];
-    correctionsTable.generate(correctionCorpus, function(){}, function() {
-      wordAligner.align(pairForAlignment, function(alignment) {
+    tact.correctionsTable.generate(correctionCorpus, function(){}, function() {
+      tact.wordAligner.align(pairForAlignment, function(alignment) {
         alignmentData = alignment;
         var alignment = alignmentData[0];
         assert.isArray(alignment);

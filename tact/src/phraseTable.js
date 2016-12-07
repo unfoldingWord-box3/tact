@@ -1,40 +1,43 @@
-var tools = require('./tools.js');
-var config = require('./config.js');
-var table = require('./table.js');
-var segmenter = require('./segmenter');
+var config = require('../config.js')
+var tools = require('./tools.js')
+var table = require('./table.js')
+var scoring = require('./scoring.js')
+var segmenter = require('./segmenter.js')
 
+exports.config = config;
 exports.table = table;
 var permutations = {};
 var tableName = 'phrases';
 exports.tableName = tableName;
 
 var prune = function(sourceString, targetString, callback) {
-  var sourceNgramArray = tools.ngram(sourceString, config.ngrams.sourceMax);
-  var targetNgramArray = tools.ngram(targetString, config.ngrams.targetMax);
-  table.phrases(tableName, sourceString, targetString, sourceNgramArray, targetNgramArray, function(phrases) {
-    callback(phrases);
-  });
+  table.phrases(tableName, sourceString, targetString, callback);
 };
 exports.prune = prune;
 
-var increment = function(sourceNgram, targetNgram) {
+var increment = function(sourceNgram, targetNgram, staticScore) {
   if (permutations[sourceNgram] === undefined) {
     permutations[sourceNgram] = {};
   }
   if (permutations[sourceNgram][targetNgram] === undefined) {
-    permutations[sourceNgram][targetNgram] = 1;
-  } else {
-    permutations[sourceNgram][targetNgram] = permutations[sourceNgram][targetNgram] + 1;
+    permutations[sourceNgram][targetNgram] = [];
   }
+  permutations[sourceNgram][targetNgram].push(staticScore);
 };
 exports.increment = increment;
 
 var append = function(source, target) {
-  var sourceArray = tools.ngram(source, config.ngrams.sourceMax);
-  var targetArray = tools.ngram(target, config.ngrams.targetMax);
-  sourceArray.forEach(function(sourceNgram, index) {
-    targetArray.forEach(function(targetNgram, _index) {
-      increment(sourceNgram, targetNgram);
+  var sourceArray = tools.ngram(source, config.global.ngram.source);
+  var targetArray = tools.ngram(target, config.global.ngram.target);
+  sourceArray.forEach(function(sourcePhrase, index) {
+    targetArray.forEach(function(targetPhrase, _index) {
+      var staticScore;
+      if (config.global.features.staticScores) {
+        staticScore = scoring.staticScore(source, target, sourcePhrase, targetPhrase)
+      } else {
+        staticScore = {}
+      }
+      increment(sourcePhrase, targetPhrase, staticScore);
     });
   });
 };
@@ -49,7 +52,7 @@ exports.generate = function(trainingSet, progress, callback) {
       progress((index+1)/count);
       var source = pair[0];
       var target = pair[1];
-      if (config.segmentation.corpus) {
+      if (config.train.features.segment) {
         var sourceSegments = segmenter.segment(source);
         var targetSegments = segmenter.segment(target);
         if (sourceSegments.length == targetSegments.length) {

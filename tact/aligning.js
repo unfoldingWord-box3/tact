@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-var tact = require('./tact.js');
+var wordAligner = require('./src/wordAligner.js');
 var async = require('async');
 
 var align = function(alignmentPairs, progress, callback) {
@@ -10,7 +10,7 @@ var align = function(alignmentPairs, progress, callback) {
   // due to sqlite single being threaded, while sql is using i/o, we can work on another.
   async.mapLimit(alignmentPairs, 1, // increasing more than 2 slows it down. 2 is 1/20 faster
     function(alignmentPair, _callback) {
-      tact.wordAligner.align(alignmentPair, function(alignment) {
+      wordAligner.align(alignmentPair, function(alignment) {
         completed ++;
         progress(completed/count);
         _callback(null, alignment);

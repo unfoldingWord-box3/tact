@@ -1,40 +1,45 @@
 // tests/aligner.js
-var chai = require('chai');
-var assert = chai.assert;
-var table = require('./../tact/src/table.js');
-var tokenizer = require('./../tact/src/tokenizer.js');
+var chai = require('chai')
+var assert = chai.assert
+var tact = require('./../tact/tact.js')
 
 var tableName = 'test';
+var score = {
+  phraseCountScore: 1,
+  wordOrderScore: 1,
+  sizeDeltaScore: 1
+}
+
 var permutations = {
   "hello": {
-    "olleh": 3,
-    "dlrow": 2,
-    "ocat": 1
+    "olleh": [score,score,score],
+    "dlrow": [score,score],
+    "ocat": [score]
   },
   "world": {
-    "olleh": 2,
-    "dlrow": 3,
-    "ocat": 1
+    "olleh": [score,score],
+    "dlrow": [score,score,score],
+    "ocat": [score]
   },
   "taco": {
-    "olleh": 1,
-    "dlrow": 2,
-    "ocat": 3
+    "olleh": [score],
+    "dlrow": [score,score],
+    "ocat": [score,score,score]
   }
 };
 
 describe('table', function() {
   it('init() should start with an empty table', function(done) {
-    table.init(tableName, function() {
-      table.getCount(tableName, function(count) {
+    tact.table.init(tableName, function() {
+      tact.table.getCount(tableName, function(count) {
         assert.equal(count, 0);
         done();
       });
     });
   });
   it('bulkInsert() should add rows to the table', function(done) {
-    table.bulkInsert(tableName, permutations, function(){}, function() {
-      table.getCount(tableName, function(count) {
+    tact.table.bulkInsert(tableName, permutations, function(){}, function() {
+      tact.table.getCount(tableName, function(count) {
         assert.equal(count, 3);
         done();
       });
@@ -42,10 +47,8 @@ describe('table', function() {
   });
   it('phrases() should return tableRows with totals in each row', function(done) {
     var sourceString = 'hello', targetString = 'olleh';
-    var sourcePhrase = 'hello', targetPhrase = 'olleh';
-    var sourcePhrases = [sourcePhrase], targetPhrases = [targetPhrase];
-    table.phrases(tableName, sourceString, targetString, sourcePhrases, targetPhrases, function(tableRows) {
-      var row = tableRows[0];
+    tact.table.phrases(tableName, sourceString, targetString, function(alignments) {
+      var row = alignments[0];
       assert.equal(row.localSourceTotal, 3);
       // assert.equal(row.localTargetTotal, 3);
       assert.equal(row.globalSourceTotal, 6);
@@ -54,8 +57,8 @@ describe('table', function() {
     });
   });
   it('cleanup() should yield an table count of 0', function(done) {
-    table.cleanup(tableName, function() {
-      table.getCount(tableName, function(count) {
+    tact.table.cleanup(tableName, function() {
+      tact.table.getCount(tableName, function(count) {
         assert.equal(count, 0);
         done();
       });

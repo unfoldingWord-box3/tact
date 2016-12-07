@@ -1,8 +1,8 @@
 // tests/corpusFaker.js
-var chai = require('chai');
-var assert = chai.assert;
-var corpusFaker = require('./../tact/src/corpusFaker.js');
-var tokenizer = require('./../tact/src/tokenizer.js');
+var chai = require('chai')
+var assert = chai.assert
+var corpusFaker = require('./../tact/src/corpusFaker.js')
+var tokenizer = require('./../tact/src/tokenizer.js')
 
 
 describe('corpusFaker.random', function() {

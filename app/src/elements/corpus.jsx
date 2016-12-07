@@ -145,12 +145,14 @@ class CorpusForm extends React.Component {
     tact.corpus.pivot(_this.state.corpusSource.split('\n'), _this.state.corpusTarget.split('\n'), function(corpus) {
       tact.corpus.pivot(_this.state.correctionsSource.split('\n'), _this.state.correctionsTarget.split('\n'), function(corrections) {
         function progress(percent) {
-          console.log(percent);
+          // console.log(percent);
         };
         console.log('corpus was submitted: \n', corpus);
         tact.training.train(corpus, corrections,
           function(percent) {
-            _this.setState({trainingProgress: percent});
+            if (percent != _this.state.trainingProgress) {
+              _this.setState({trainingProgress: percent});
+            }
           },
           progress,
           function() { console.log('corpus complete'); },
@@ -159,7 +161,9 @@ class CorpusForm extends React.Component {
             console.log('training complete');
             tact.aligning.align(corpus,
               function(percent) {
-                _this.setState({aligningProgress: percent})
+                if (percent != _this.state.aligningProgress) {
+                  _this.setState({aligningProgress: percent})
+                }
               },
               function(alignments) {
                 console.log(alignments);

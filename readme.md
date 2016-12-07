@@ -54,12 +54,8 @@ Run Tests: `npm test`
 
 Train on included data:
 
-`./train.js -s ./tests/fixtures/greekToEnglish/corpus/greek.txt -t
-./tests/fixtures/greekToEnglish/corpus/english.txt -a
-./tests/fixtures/greekToEnglish/corrections/greek.txt -b
-./tests/fixtures/greekToEnglish/corrections/english.txt`
+`./train.js -x greek -y english -s ./tests/fixtures/greekToEnglish/corpus/greek.txt -t ./tests/fixtures/greekToEnglish/corpus/english.txt -a ./tests/fixtures/greekToEnglish/corrections/greek.txt -b ./tests/fixtures/greekToEnglish/corrections/english.txt`
 
 Align first 10 lines of corpus skipping first line:
 
-`./align.js -s ./tests/fixtures/greekToEnglish/corpus/greek.txt -t
-./tests/fixtures/greekToEnglish/corpus/english.txt -f 1 -n 10`
+`./align.js -x greek -y english -s ./tests/fixtures/greekToEnglish/corpus/greek.txt -t ./tests/fixtures/greekToEnglish/corpus/english.txt -f 1 -n 10`

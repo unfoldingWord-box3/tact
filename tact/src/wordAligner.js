@@ -1,10 +1,12 @@
-var tools = require('./tools.js');
-var config = require('./config.js');
-var scoring = require('./scoring.js');
-var phraseTable = require('./phraseTable.js');
-var correctionsTable = require('./correctionsTable.js');
-var tokenizer = require('./tokenizer');
-var segmenter = require('./segmenter');
+var config = require('../config.js')
+var tools = require('./tools.js')
+var scoring = require('./scoring.js')
+var phraseTable = require('./phraseTable.js')
+var correctionsTable = require('./correctionsTable.js')
+var tokenizer = require('./tokenizer')
+var segmenter = require('./segmenter')
+
+exports.config = config;
 
 // determine the combination of best rows for highest combined score
 var bestAlignments = function(sourceString, targetString, _alignmentData) {
@@ -47,7 +49,7 @@ var penalizeConflictingAlignments = function(row, available, neededSource, neede
     var needed = isNeeded(_row, neededSource, neededTarget);
     if (!needed && !_row.correction) {
       available[index].conflict = true;
-      var newScore = row.score/config.penalties.conflict;
+      var newScore = row.score/config.align.penalties.conflict;
       available[index].score = Math.round( newScore * 1000) / 1000
     }
   });
@@ -78,7 +80,7 @@ var alignmentBySourceTokens = function(_sourceTokens, alignment) {
     // Some tokens may be conjoined with next token if not found
     // Need to look for longer ngrams before shorter ones in case both are present
     var n;
-    for (n = config.ngrams.sourceMax; n > 0; n--) {
+    for (n = config.global.ngram.source; n > 0; n--) {
       if (sourceTokens.length > 0) {
         queue.push(sourceTokens.shift());
       }
@@ -133,7 +135,7 @@ var align = function(pairForAlignment, callback) {
   var sourceSegments = segmenter.segment(sourceString);
   var targetSegments = segmenter.segment(targetString);
   var segmentQueue = [];
-  if (config.segmentation.aligner && sourceSegments.length == targetSegments.length) {
+  if (config.align.features.segment && sourceSegments.length == targetSegments.length) {
     sourceSegments.forEach(function(sourceSegment, _index){
       segmentQueue.push([sourceSegment, targetSegments[_index]]);
     });
