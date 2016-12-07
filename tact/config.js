@@ -14,11 +14,6 @@ defaults.global = {
 
 defaults.train = {
   features: {
-    segment: true,
-    pruning: true
-  },
-  pruning: {
-    oneOffCollapseMinimumCeiling: 2
   }
 }
 
@@ -27,11 +22,10 @@ defaults.align = {
     ngramPriority: true,
     phraseCount: true,
     sizeDelta: true,
-    segment: false,
     penalties: true
   },
   penalties: {
-    conflict: 10
+    conflict: 2
   },
   bonus: {
     correction: 1.0 // added to score

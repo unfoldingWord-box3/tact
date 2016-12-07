@@ -6,7 +6,6 @@ var tact = {
   correctionsTable: require('./src/correctionsTable.js'),
   wordAligner: require('./src/wordAligner.js'),
   corpus: require('./src/corpus.js'),
-  segmenter: require('./src/segmenter.js'),
   tokenizer: require('./src/tokenizer.js'),
 
   training: require('./training.js'),

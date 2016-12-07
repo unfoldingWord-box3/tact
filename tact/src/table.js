@@ -56,12 +56,13 @@ var table = {
     var targets = {}
 
     trainingPairs.forEach(function(trainingPair, _index) {
+      var trainingSourceLine = trainingPair[0]
       var trainingTargetLine = trainingPair[1]
       var trainingTargetPhrases = isCorrection ? [trainingTargetLine] : tools.ngram(trainingTargetLine, config.global.ngram.target)
       trainingTargetPhrases.forEach(function(target, index) {
         if (targetPhrases.indexOf(target) > -1) {
           if (targets[target] === undefined) targets[target] = []
-          var staticScore = scoring.staticScore(source, target, trainingPair[0], trainingPair[1])
+          var staticScore = scoring.staticScore(source, target, trainingSourceLine, trainingTargetLine)
           targets[target].push(staticScore)
           localSourceTotal ++
         }

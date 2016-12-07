@@ -2,7 +2,6 @@ var config = require('../config.js')
 var tools = require('./tools.js')
 var table = require('./table.js')
 var scoring = require('./scoring.js')
-var segmenter = require('./segmenter.js')
 
 var phraseTable = {
   tableName: 'phrases',

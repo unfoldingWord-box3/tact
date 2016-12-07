@@ -4,6 +4,17 @@ var ngram = require('./ngram.js')
 
 var tools = {
 
+  getIndicesOf: function(phrase, string) {
+    var phraseLength = phrase.length
+    if (phraseLength == 0) return []
+    var startIndex = 0, index, indices = []
+    while ((index = string.indexOf(phrase, startIndex)) > -1) {
+        indices.push(index);
+        startIndex = index + phraseLength;
+    }
+    return indices;
+  },
+
   averageObjects: function(array) {
     if (array.length == 1) return array[0];
     var sums = {}, counts = {}, results = {}, keys;
