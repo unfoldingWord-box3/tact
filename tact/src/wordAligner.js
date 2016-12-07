@@ -132,29 +132,15 @@ var align = function(pairForAlignment, callback) {
   var alignment = []; // response
   var sourceString = pairForAlignment[0];
   var targetString = pairForAlignment[1];
-  var sourceSegments = segmenter.segment(sourceString);
-  var targetSegments = segmenter.segment(targetString);
-  var segmentQueue = [];
-  if (config.align.features.segment && sourceSegments.length == targetSegments.length) {
-    sourceSegments.forEach(function(sourceSegment, _index){
-      segmentQueue.push([sourceSegment, targetSegments[_index]]);
+  alignments(sourceString, targetString, function(_alignments) {
+    // process of elimination
+    var _alignment = bestAlignments(sourceString, targetString, _alignments);
+    // reorder alignments to match source order
+    _alignment = alignmentBySourceTokens(tokenizer.tokenize(sourceString), _alignment);
+    _alignment.forEach(function(row, index) {
+      alignment.push(row);
     });
-  } else {
-    segmentQueue.push([sourceString, targetString]);
-  }
-  segmentQueue.forEach(function(segmentPair, index) {
-    var _sourceString = segmentPair[0];
-    var _targetString = segmentPair[1];
-    alignments(_sourceString, _targetString, function(_alignments) {
-      // process of elimination
-      var _alignment = bestAlignments(_sourceString, _targetString, _alignments);
-      // reorder alignments to match source order
-      _alignment = alignmentBySourceTokens(tokenizer.tokenize(_sourceString), _alignment);
-      _alignment.forEach(function(row, index) {
-        alignment.push(row);
-      });
-      callback(alignment);
-    });
+    callback(alignment);
   });
 };
 exports.align = align;

@@ -6,64 +6,68 @@ var db = require('./db.js')
 
 db.init()
 
-var table = function(tableName) {
-  return db.localforage.createInstance({"name": config.global.sourceLanguage+'-'+config.global.targetLanguage+'-'+tableName});
-}
+var table = {
 
-var cleanup = function(tableName, callback) {
-  table(tableName).clear(callback);
-};
-exports.cleanup = cleanup;
+  table: function(tableName) {
+    return db.localforage.createInstance({"name": config.global.sourceLanguage+'-'+config.global.targetLanguage+'-'+tableName})
+  },
 
-var init = function(tableName, callback) {
-  cleanup(tableName, function(){
-    callback(table(tableName));
-  })
-};
-exports.init = init;
+  cleanup: function(tableName, callback) {
+    this.table(tableName).clear(callback)
+  },
 
-exports.getCount = function(tableName, callback) {
-  table(tableName).length(function(err,length) {
-    callback(length);
-  });
-};
+  init: function(tableName, callback) {
+    var _this = this
+    this.cleanup(tableName, function(){
+      callback(_this.table(tableName))
+    })
+  },
 
-var bulkInsert = function(tableName, permutations, progress, callback) {
-  var sourcePhrases = Object.keys(permutations);
-  var total = Object.keys(permutations).length
-  var index = 0;
-  async.mapLimit(sourcePhrases, 2,// increasing more than 2 slows it down. 2 is 1/20 faster
-    function(sourcePhrase, _callback) {
-      var targets = permutations[sourcePhrase];
-      table(tableName).setItem(sourcePhrase, targets, function(err) {
-        index ++;
-        progress(index/total);
-        _callback(null, err);
-      });
-    },
-    function(err, errs) {
-      callback();
-    }
-  );
-};
-exports.bulkInsert = bulkInsert;
+  getCount: function(tableName, callback) {
+    this.table(tableName).length(function(err,length) {
+      callback(length)
+    });
+  },
 
-var calculateRows = function(source, targets, tableName, sourceString, targetString, sourcePhrases, targetPhrases) {
-  var rows = []
-  var globalSourceTotal = 0;
-  var localSourceTotal = 0;
-  tools.forObject(targets, function(target, staticScores) {
-    var tally = staticScores.length;
-    globalSourceTotal = globalSourceTotal + tally;
-    if (targetPhrases.indexOf(target) > -1) {
-      localSourceTotal = localSourceTotal + tally;
-    }
-  });
-  tools.forObject(targets, function(target, staticScores) {
-    var tally = staticScores.length;
-    var staticScore = tools.averageObjects(staticScores);
-    if (targetPhrases.indexOf(target) > -1) {
-      var row = {
+  store: function(tableName, phraseIndex, trainingSet, progress, callback) {
+    var _this = this
+    this.table(tableName).setItem('phraseIndex', phraseIndex, function() {
+      progress(0.66)
+      _this.table(tableName).setItem('trainingSet', trainingSet, function() {
+        progress(1.0)
+        callback()
+      })
+    })
+  },
+
+  calculateAlignments: function(tableName, source, trainingPairs, sourceString, targetString) {
+    var alignments = []
+
+    var sourcePhrases = tools.ngram(sourceString, config.global.ngram.source)
+    var targetPhrases = tools.ngram(targetString, config.global.ngram.target)
+
+    var globalSourceTotal = 0
+    var localSourceTotal = 0
+    var targets = {}
+
+    trainingPairs.forEach(function(trainingPair, _index) {
+      var trainingTargetLine = trainingPair[1]
+      var trainingTargetPhrases = tools.ngram(trainingTargetLine, config.global.ngram.target)
+      trainingTargetPhrases.forEach(function(target, index) {
+        if (targetPhrases.indexOf(target) > -1) {
+          if (targets[target] === undefined) targets[target] = []
+          var staticScore = scoring.staticScore(source, target, trainingPair[0], trainingPair[1])
+          targets[target].push(staticScore)
+          localSourceTotal ++
+        }
+        globalSourceTotal ++
+      })
+    })
+
+    tools.forObject(targets, function(target, staticScores) {
+      var tally = staticScores.length
+      var staticScore = tools.averageObjects(targets[target])
+      var alignment = {
         source: source, target: target, tally: tally,
         staticScore: staticScore,
         globalSourceTotal: globalSourceTotal,
@@ -73,29 +77,40 @@ var calculateRows = function(source, targets, tableName, sourceString, targetStr
         conflict: false,
         sourceUsed: false,
         correction: (tableName == 'corrections')
-      };
-      row = scoring.score(sourceString, targetString, row);
-      rows.push(row);
-    }
-  });
-  return rows;
-};
-
-var phrases = function(tableName, sourceString, targetString, callback) {
-  var sourcePhrases = tools.ngram(sourceString, config.global.ngram.source);
-  var targetPhrases = tools.ngram(targetString, config.global.ngram.target);
-  var alignments = [];
-  async.mapLimit(sourcePhrases, 2, function(sourcePhrase, cb) {
-    table(tableName).getItem(sourcePhrase).then(function(targets) {
-      if (targets !== null) {
-        var rows = calculateRows(sourcePhrase, targets, tableName, sourceString, targetString, sourcePhrases, targetPhrases);
-        alignments = alignments.concat(rows);
       }
-      cb();
-    });
-  }, function(err) {
-    if (err) return console.log(err);
-    callback(alignments);
-  });
-};
-exports.phrases = phrases;
+      alignment = scoring.score(sourceString, targetString, alignment)
+      alignments.push(alignment)
+    })
+    return alignments
+  },
+
+  dynamicTrain: function(tableName, phraseIndex, trainingSet, sourceString, targetString, callback) {
+    var _this = this
+    var alignments = []
+    var sourcePhrases = tools.ngram(sourceString, config.global.ngram.source)
+    sourcePhrases.forEach(function(sourcePhrase, i) {
+      var indices = phraseIndex[sourcePhrase]
+      if (indices !== undefined) {
+        var trainingPairs = []
+        indices.forEach(function(index, _index) {
+          var trainingPair = trainingSet[index]
+          trainingPairs.push(trainingPair)
+        })
+        var _alignments = _this.calculateAlignments(tableName, sourcePhrase, trainingPairs, sourceString, targetString)
+        alignments = alignments.concat(_alignments)
+      }
+    })
+    callback(alignments)
+  },
+
+  phrases: function(tableName, sourceString, targetString, callback) {
+    var _this = this
+    this.table(tableName).getItem('phraseIndex', function(err, phraseIndex) {
+      _this.table(tableName).getItem('trainingSet', function(err, trainingSet) {
+        _this.dynamicTrain(tableName, phraseIndex, trainingSet, sourceString, targetString, callback)
+      })
+    })
+  }
+}
+
+exports = module.exports = table
