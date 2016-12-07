@@ -14,13 +14,13 @@ var phraseTable = {
 
   append: function(source, index) {
     var _this = this
-    var sourceArray = tools.ngram(source, config.global.ngram.source);
+    var sourceArray = tools.ngram(source, config.global.ngram.source)
     sourceArray.forEach(function(sourcePhrase, _index) {
       if (_this.phraseIndex[sourcePhrase] === undefined) {
         _this.phraseIndex[sourcePhrase] = []
       }
-      _this.phraseIndex[sourcePhrase].push(index);
-    });
+      _this.phraseIndex[sourcePhrase].push(index)
+    })
   },
 
   // can pass in table so that it can incriment counts
@@ -37,7 +37,10 @@ var phraseTable = {
       })
       progress(0.33)
       console.log("storing phraseIndex...")
-      table.store(__this.tableName, __this.phraseIndex, trainingSet, progress, callback)
+      table.store(__this.tableName, __this.phraseIndex, trainingSet, progress, function() {
+        __this.phraseIndex = {}
+        callback()
+      })
     })
   }
 }

@@ -13,7 +13,12 @@ var table = {
   },
 
   cleanup: function(tableName, callback) {
-    this.table(tableName).clear(callback)
+    var _this = this
+    this.table(tableName).setItem('phraseIndex', {}, function() {
+      _this.table(tableName).setItem('trainingSet', [], function() {
+        _this.table(tableName).clear(callback)
+      })
+    })
   },
 
   init: function(tableName, callback) {
@@ -43,7 +48,7 @@ var table = {
   calculateAlignments: function(tableName, source, trainingPairs, sourceString, targetString) {
     var alignments = []
 
-    var sourcePhrases = tools.ngram(sourceString, config.global.ngram.source)
+    var isCorrection = (tableName == 'corrections')
     var targetPhrases = tools.ngram(targetString, config.global.ngram.target)
 
     var globalSourceTotal = 0
@@ -52,7 +57,7 @@ var table = {
 
     trainingPairs.forEach(function(trainingPair, _index) {
       var trainingTargetLine = trainingPair[1]
-      var trainingTargetPhrases = tools.ngram(trainingTargetLine, config.global.ngram.target)
+      var trainingTargetPhrases = isCorrection ? [trainingTargetLine] : tools.ngram(trainingTargetLine, config.global.ngram.target)
       trainingTargetPhrases.forEach(function(target, index) {
         if (targetPhrases.indexOf(target) > -1) {
           if (targets[target] === undefined) targets[target] = []
@@ -87,6 +92,7 @@ var table = {
   dynamicTrain: function(tableName, phraseIndex, trainingSet, sourceString, targetString, callback) {
     var _this = this
     var alignments = []
+    var isCorrection = (tableName == 'corrections')
     var sourcePhrases = tools.ngram(sourceString, config.global.ngram.source)
     sourcePhrases.forEach(function(sourcePhrase, i) {
       var indices = phraseIndex[sourcePhrase]
@@ -107,7 +113,9 @@ var table = {
     var _this = this
     this.table(tableName).getItem('phraseIndex', function(err, phraseIndex) {
       _this.table(tableName).getItem('trainingSet', function(err, trainingSet) {
-        _this.dynamicTrain(tableName, phraseIndex, trainingSet, sourceString, targetString, callback)
+        _this.dynamicTrain(tableName, phraseIndex, trainingSet, sourceString, targetString, function(alignments) {
+          callback(alignments)
+        })
       })
     })
   }

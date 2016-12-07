@@ -9,18 +9,16 @@ var correctionsTable = {
   table: table,
   phraseIndex: {},
   prune: function(sourceString, targetString, callback) {
-    table.phrases(this.tableName, sourceString, targetString, callback)
+    table.phrases(this.tableName, sourceString, targetString, function(alignments) {
+      callback(alignments)
+    })
   },
 
   append: function(source, index) {
-    var _this = this
-    var sourceArray = tools.ngram(source, config.global.ngram.source);
-    sourceArray.forEach(function(sourcePhrase, _index) {
-      if (_this.phraseIndex[sourcePhrase] === undefined) {
-        _this.phraseIndex[sourcePhrase] = []
-      }
-      _this.phraseIndex[sourcePhrase].push(index);
-    });
+    if (this.phraseIndex[source] === undefined) {
+      this.phraseIndex[source] = []
+    }
+    this.phraseIndex[source].push(index);
   },
 
   // can pass in table so that it can incriment counts
@@ -37,7 +35,10 @@ var correctionsTable = {
       })
       progress(0.33)
       console.log("storing phraseIndex...")
-      table.store(__this.tableName, __this.phraseIndex, trainingSet, progress, callback)
+      table.store(__this.tableName, __this.phraseIndex, trainingSet, progress, function() {
+        __this.phraseIndex = {}
+        callback()
+      })
     })
   }
 }

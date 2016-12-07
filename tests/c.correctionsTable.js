@@ -7,7 +7,7 @@ function reverse(s) {
   return s.split('').reverse().join('')
 }
 
-var sources = ["hello", "asdf"]
+var sources = ["hello", "asdf", "taco tuesdays"]
 var targets = []
 sources.forEach(function(string, index){ targets.push(reverse(string)) })
 var corpus = []
@@ -24,8 +24,26 @@ describe('correctionsTable', function() {
     })
   })
   it('prune() with one word pair should return 1 row', function(done) {
-    tact.correctionsTable.prune('hello', 'olleh', function(all) {
-      assert.equal(all.length, 1)
+    tact.correctionsTable.prune('hello', 'olleh', function(alignments) {
+      assert.equal(alignments.length, 1)
+      done()
+    })
+  })
+  it('prune() with two word pair should return 1 row', function(done) {
+    tact.correctionsTable.prune('taco tuesdays', 'syadseut ocat', function(alignments) {
+      assert.equal(alignments.length, 1)
+      done()
+    })
+  })
+  it('prune() with should find corrections for sub strings', function(done) {
+    tact.correctionsTable.prune('hello taco tuesdays', 'syadseut ocat olleh', function(alignments) {
+      assert.equal(alignments.length, 2)
+      done()
+    })
+  })
+  it('prune() should not return a substring rule from a multi token entry', function(done) {
+    tact.correctionsTable.prune('taco', 'ocat', function(alignments) {
+      assert.equal(alignments.length, 0)
       done()
     })
   })
