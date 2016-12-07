@@ -132,17 +132,22 @@ var wordAligner = {
     var alignment = [] // response
     var sourceString = pairForAlignment[0]
     var targetString = pairForAlignment[1]
-    var _this = this
-    this.alignments(sourceString, targetString, function(_alignments) {
-      // process of elimination
-      var _alignment = _this.bestAlignments(sourceString, targetString, _alignments)
-      // reorder alignments to match source order
-      _alignment = _this.alignmentBySourceTokens(tokenizer.tokenize(sourceString), _alignment)
-      _alignment.forEach(function(row, index) {
-        alignment.push(row)
-      })
+    if (sourceString == '' || targetString == '') {
       callback(alignment)
-    })
+    } else {
+      var _this = this
+      this.alignments(sourceString, targetString, function(_alignments) {
+        // process of elimination
+        var _alignment = _this.bestAlignments(sourceString, targetString, _alignments)
+        // reorder alignments to match source order
+        _alignment = _this.alignmentBySourceTokens(tokenizer.tokenize(sourceString), _alignment)
+        _alignment.forEach(function(row, index) {
+          alignment.push(row)
+        })
+        callback(alignment)
+      })
+    }
+
   }
 
 }
