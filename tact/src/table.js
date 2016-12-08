@@ -7,7 +7,7 @@ var db = require('./db.js')
 db.init()
 
 var table = {
-
+  cache: {},
   table: function(tableName) {
     return db.localforage.createInstance({"name": config.global.sourceLanguage+'-'+config.global.targetLanguage+'-'+tableName})
   },
@@ -36,6 +36,8 @@ var table = {
 
   store: function(tableName, phraseIndex, trainingSet, progress, callback) {
     var _this = this
+    this.cache[tableName+'-phraseIndex'] = phraseIndex
+    this.cache[tableName+'-trainingSet'] = trainingSet
     this.table(tableName).setItem('phraseIndex', phraseIndex, function() {
       progress(0.66)
       _this.table(tableName).setItem('trainingSet', trainingSet, function() {
@@ -80,6 +82,8 @@ var table = {
         localSourceTotal: localSourceTotal,
         globalTargetTotal: 0,
         localTargetTotal: 0,
+        sourceNeeded: true,
+        targetNeeded: true,
         conflict: false,
         sourceUsed: false,
         correction: (tableName == 'corrections')
@@ -110,11 +114,34 @@ var table = {
     callback(alignments)
   },
 
+  phraseIndex: function(tableName, callback) {
+    var phraseIndex = table.cache[tableName+'-phraseIndex']
+    if (phraseIndex !== undefined) {
+      callback(phraseIndex)
+    } else {
+      table.table(tableName).getItem('phraseIndex', function(err, phraseIndex) {
+        table.cache[tableName+'-phraseIndex'] = phraseIndex
+        callback(phraseIndex)
+      })
+    }
+  },
+
+  trainingSet: function(tableName, callback) {
+    var trainingSet = table.cache[tableName+'-trainingSet']
+    if (trainingSet !== undefined) {
+      callback(trainingSet)
+    } else {
+      table.table(tableName).getItem('trainingSet', function(err, trainingSet) {
+        table.cache[tableName+'-trainingSet'] = trainingSet
+        callback(trainingSet)
+      })
+    }
+  },
+
   phrases: function(tableName, sourceString, targetString, callback) {
-    var _this = this
-    this.table(tableName).getItem('phraseIndex', function(err, phraseIndex) {
-      _this.table(tableName).getItem('trainingSet', function(err, trainingSet) {
-        _this.dynamicTrain(tableName, phraseIndex, trainingSet, sourceString, targetString, function(alignments) {
+    table.phraseIndex(tableName, function(phraseIndex) {
+      table.trainingSet(tableName, function(trainingSet) {
+        table.dynamicTrain(tableName, phraseIndex, trainingSet, sourceString, targetString, function(alignments) {
           callback(alignments)
         })
       })

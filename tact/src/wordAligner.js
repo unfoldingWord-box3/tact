@@ -13,53 +13,71 @@ var wordAligner = {
     var neededTarget = tokenizer.tokenize(targetString).join(' ')
     var available = _alignmentData.slice(0)
     do { // use all source words
-      available.sort(function(a,b) {
-        return b.score - a.score
+      var _this = this
+      this.bestAlignment(available, function(best, rest) {
+        available = rest
+        var regexSource = new RegExp("( |^)+?" + best.source + "( |$)+?", 'g')  // using g replaces all assumes all source occurences align to same target
+        var regexTarget = new RegExp("( |^)+?" + best.target + "( |$)+?", 'g')
+        if (best !== undefined && neededSource.match(regexSource) != null) {
+          neededSource = neededSource.replace(regexSource, '  ')
+          neededTarget = neededTarget.replace(regexTarget, '  ')
+          available = _this.penalizeUnneeded(best, available, neededSource, neededTarget)
+          available = _this.removeUnneededSources(available)
+          var bestPair = [best.source, best.target, best.score]
+          alignment.push(bestPair)
+        }
       })
-
-      var best = this.bestAlignment(available)
-      var regexSource = new RegExp("( |^)+?" + best.source + "( |$)+?", 'g')  // using g replaces all assumes all source occurences align to same target
-      var regexTarget = new RegExp("( |^)+?" + best.target + "( |$)+?", 'g')
-      if (best !== undefined && neededSource.match(regexSource) != null) {
-        neededSource = neededSource.replace(regexSource, '  ')
-        neededTarget = neededTarget.replace(regexTarget, '  ')
-        available = this.penalizeUnneeded(best, available, neededSource, neededTarget)
-        var bestPair = [best.source, best.target, best.score]
-        alignment.push(bestPair)
-      }
     } while (available.length > 0 && tokenizer.tokenize(neededSource).length > 0)
     return alignment
   },
+  removeUnneededSources: function(available) {
+    for (var index = 0; index < available.length; index ++) {
+      if (!available[index].sourceNeeded) {
+        available.splice(index, 1)
+        index --
+      }
+    }
+    return available
+  },
   // instead of previous approach of conflicts, look to see what is needed
   isNeeded: function(row, neededSource, neededTarget) {
-    var needed = true
-    var regexSource = new RegExp("( |^)+?" + row.source + "( |$)+?", '')
-    var regexTarget = new RegExp("( |^)+?" + row.target + "( |$)+?", '')
-    if (neededSource.search(regexSource) == -1 ||
-        neededTarget.search(regexTarget) == -1) {
-          needed = false
-        }
-    return needed
+    if (row.sourceNeeded) { // don't check again if it wasn't needed already
+      var regexSource = new RegExp("( |^)+?" + row.source + "( |$)+?", '')
+      if (neededSource.search(regexSource) == -1) {
+        row.sourceNeeded = false
+      }
+    }
+    if (row.targetNeeded) { // don't check again if it wasn't needed already
+      var regexTarget = new RegExp("( |^)+?" + row.target + "( |$)+?", '')
+      if (neededTarget.search(regexTarget) == -1) {
+        row.targetNeeded = false
+      }
+    }
+    return row
   },
   // penalize remaining alignments so that they are less likely to be selected
   penalizeUnneeded: function(row, available, neededSource, neededTarget) {
     var _this = this
     if (config.align.features.penalties) {
       available.forEach(function(_row, index) {
-        var needed = _this.isNeeded(_row, neededSource, neededTarget)
-        if (!needed && !_row.correction) {
-          available[index].conflict = true
-          var newScore = row.score/config.align.penalties.conflict
-          available[index].score = Math.round( newScore * 1000) / 1000
+        if (!_row.correction) {
+          _row = _this.isNeeded(_row, neededSource, neededTarget)
+          if (!_row.targetNeeded) {
+            var newScore = row.score/config.align.penalties.conflict
+            available[index].score = Math.round( newScore * 1000) / 1000
+          }
         }
       })
     }
     return available
   },
   // determine the best single row
-  bestAlignment: function(alignmentData) {
-    var row = alignmentData.shift()
-    return row
+  bestAlignment: function(alignments, callback) {
+    alignments.sort(function(a,b) {
+      return b.score - a.score
+    })
+    var alignment = alignments.shift()
+    callback(alignment, alignments)
   },
   // this function could be optimized by passing in alignment as an object instead of array
   // sourceTokens = [tokens...], alignment = [source, target, score]
