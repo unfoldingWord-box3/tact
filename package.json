@@ -12,12 +12,12 @@
     "transform": "config-browserify"
   },
   "scripts": {
-    "test": "mocha ./tests/",
+    "test": "mkdir ./localstorage & mocha ./tests/",
     "build": "mkdir ./app/public/js & browserify -t babelify ./app/src/app.jsx -o ./app/public/js/app.js",
     "watch": "watchify -t babelify ./app/src/app.jsx -o ./app/public/js/app.js",
     "start-dev": "nodemon ./app/server.js",
     "start": "node ./app/server.js",
-    "postinstall": "mkdir ./localstorage & npm run build"
+    "postinstall": "npm run build"
   },
   "repository": {
     "type": "git",
