@@ -7,7 +7,6 @@ var FormControl = require('react-bootstrap').FormControl
 var Grid = require('react-bootstrap').Grid
 var Row = require('react-bootstrap').Row
 var Col = require('react-bootstrap').Col
-var Json = require('react-json')
 var options = require('config')
 
 var AlignmentsList = require('./alignment.jsx')
