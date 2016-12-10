@@ -7,7 +7,7 @@ var db = require('./db.js')
 var table = {
   cache: {},
   table: function(options, tableName) {
-    db.init(options)
+    db.init()
     return db.localforage.createInstance({"name": options.global.sourceLanguage+'-'+options.global.targetLanguage+'-'+tableName})
   },
 

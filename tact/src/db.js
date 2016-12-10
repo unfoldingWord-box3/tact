@@ -1,10 +1,10 @@
 
 var db = {
   localforage: undefined,
-  init: function(options) {
+  init: function() {
     if (typeof localStorage === "undefined" || localStorage === null) {
       var LocalStorage = require('node-localstorage').LocalStorage
-      localStorage = new LocalStorage('./localstorage/'+options.global.sourceLanguage+'-'+options.global.targetLanguage)
+      localStorage = new LocalStorage('./localstorage')
     }
     this.localforage = require('localforage')
     // this.localforage.setDriver(this.localforage.LOCALSTORAGE)

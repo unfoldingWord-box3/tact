@@ -12,7 +12,7 @@
     "transform": "config-browserify"
   },
   "scripts": {
-    "test": "mkdir ./localstorage & mocha ./tests/",
+    "test": "mocha ./tests/",
     "build": "mkdir ./app/public/js & browserify -t babelify ./app/src/app.jsx -o ./app/public/js/app.js",
     "watch": "watchify -t babelify ./app/src/app.jsx -o ./app/public/js/app.js",
     "start-dev": "nodemon ./app/server.js",
