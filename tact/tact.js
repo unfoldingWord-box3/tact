@@ -1,6 +1,5 @@
+process.env.SUPPRESS_NO_CONFIG_WARNING = 'y';
 var tact = {
-  config: require('./config.js'),
-
   table: require('./src/table.js'),
   phraseTable: require('./src/phraseTable.js'),
   correctionsTable: require('./src/correctionsTable.js'),

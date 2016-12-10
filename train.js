@@ -1,6 +1,7 @@
 #!/usr/bin/env node --max_old_space_size=4096
 var tact = require('./tact/tact.js')
 var async = require('async')
+var _options = require('config').Client
 
 var cli = require('cli')
 var options = cli.parse({
@@ -19,7 +20,7 @@ tact.corpus.parseFiles(options.sourceCorrectionsFile, options.targetCorrectionsF
   // console.time('correctionsTable-1')
   tact.corpus.parseFiles(options.sourceCorpusFile, options.targetCorpusFile, function(corpus) {
     // console.time('corpusTable-1')
-    tact.training.train(corpus, corrections, progress, progress,
+    tact.training.train(_options, corpus, corrections, progress, progress,
       function() {
         // console.timeEnd('correctionsTable-1')
       },

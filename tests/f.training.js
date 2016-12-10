@@ -2,6 +2,7 @@
 var chai = require('chai')
 var assert = chai.assert
 var tact = require('./../tact/tact.js')
+var options = require('config').Client
 
 function reverse(s) {
   return s.split('').reverse().join('')
@@ -30,14 +31,14 @@ describe('training.train', function() {
     function corpusCallback() {}
     function correctionsCallback() {}
     function callback() {
-      tact.phraseTable.table.getCount(tact.phraseTable.tableName, function(count) {
+      tact.phraseTable.table.getCount(options, tact.phraseTable.tableName, function(count) {
         assert.equal(count, 2)
-        tact.correctionsTable.table.getCount(tact.correctionsTable.tableName, function(count) {
+        tact.correctionsTable.table.getCount(options, tact.correctionsTable.tableName, function(count) {
           assert.equal(count, 2)
           done()
         })
       })
     }
-    tact.training.train(corpus, corrections, progress, progress, corpusCallback, correctionsCallback, callback)
+    tact.training.train(options, corpus, corrections, progress, progress, corpusCallback, correctionsCallback, callback)
   })
 })

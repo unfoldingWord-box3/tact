@@ -1,4 +1,3 @@
-var config = require('../config.js')
 var tools = require('./tools.js')
 var scoring = require('./scoring.js')
 var phraseTable = require('./phraseTable.js')
@@ -7,7 +6,7 @@ var tokenizer = require('./tokenizer')
 
 var wordAligner = {
   // determine the combination of best rows for highest combined score
-  bestAlignments: function(sourceString, targetString, _alignmentData) {
+  bestAlignments: function(options, sourceString, targetString, _alignmentData) {
     var alignment = [] // response
     var neededSource = tokenizer.tokenize(sourceString).join(' ')
     var neededTarget = tokenizer.tokenize(targetString).join(' ')
@@ -21,7 +20,7 @@ var wordAligner = {
         if (best !== undefined && neededSource.match(regexSource) != null) {
           neededSource = neededSource.replace(regexSource, '  ')
           neededTarget = neededTarget.replace(regexTarget, '  ')
-          available = _this.penalizeUnneeded(best, available, neededSource, neededTarget)
+          available = _this.penalizeUnneeded(options, best, available, neededSource, neededTarget)
           available = _this.removeUnneededSources(available)
           var bestPair = [best.source, best.target, best.score]
           alignment.push(bestPair)
@@ -30,6 +29,7 @@ var wordAligner = {
     } while (available.length > 0 && tokenizer.tokenize(neededSource).length > 0)
     return alignment
   },
+
   removeUnneededSources: function(available) {
     for (var index = 0; index < available.length; index ++) {
       if (!available[index].sourceNeeded) {
@@ -56,14 +56,14 @@ var wordAligner = {
     return row
   },
   // penalize remaining alignments so that they are less likely to be selected
-  penalizeUnneeded: function(row, available, neededSource, neededTarget) {
+  penalizeUnneeded: function(options, row, available, neededSource, neededTarget) {
     var _this = this
-    if (config.align.features.penalties) {
+    if (options.align.features.penalties) {
       available.forEach(function(_row, index) {
         if (!_row.correction) {
           _row = _this.isNeeded(_row, neededSource, neededTarget)
           if (!_row.targetNeeded) {
-            var newScore = row.score/config.align.penalties.conflict
+            var newScore = row.score/options.align.penalties.conflict
             available[index].score = Math.round( newScore * 1000) / 1000
           }
         }
@@ -81,7 +81,7 @@ var wordAligner = {
   },
   // this function could be optimized by passing in alignment as an object instead of array
   // sourceTokens = [tokens...], alignment = [source, target, score]
-  alignmentBySourceTokens: function(_sourceTokens, alignment) {
+  alignmentBySourceTokens: function(options, _sourceTokens, alignment) {
     var sourceTokens = _sourceTokens.slice(0)
     var orderedAlignment = [] // response
     // transform alignment into object to look up ngrams
@@ -99,7 +99,7 @@ var wordAligner = {
       // Some tokens may be conjoined with next token if not found
       // Need to look for longer ngrams before shorter ones in case both are present
       var n
-      for (n = config.global.ngram.source; n > 0; n--) {
+      for (n = options.global.ngram.source; n > 0; n--) {
         if (sourceTokens.length > 0) {
           queue.push(sourceTokens.shift())
         }
@@ -135,10 +135,10 @@ var wordAligner = {
     return orderedAlignment
   },
 
-  alignments: function(sourceString, targetString, callback) {
+  alignments: function(options, sourceString, targetString, callback) {
     var _alignments = []
-    phraseTable.prune(sourceString, targetString, function(_phraseTable) {
-      correctionsTable.prune(sourceString, targetString, function(_correctionsTable) {
+    phraseTable.prune(options, sourceString, targetString, function(_phraseTable) {
+      correctionsTable.prune(options, sourceString, targetString, function(_correctionsTable) {
         _alignments = _correctionsTable.concat(_phraseTable)
         callback(_alignments)
       })
@@ -146,7 +146,7 @@ var wordAligner = {
   },
 
   // main alignment function that calls the other functions internally
-  align: function(pairForAlignment, callback) {
+  align: function(options, pairForAlignment, callback) {
     var alignment = [] // response
     var sourceString = pairForAlignment[0]
     var targetString = pairForAlignment[1]
@@ -154,11 +154,11 @@ var wordAligner = {
       callback(alignment)
     } else {
       var _this = this
-      this.alignments(sourceString, targetString, function(_alignments) {
+      this.alignments(options, sourceString, targetString, function(_alignments) {
         // process of elimination
-        var _alignment = _this.bestAlignments(sourceString, targetString, _alignments)
+        var _alignment = _this.bestAlignments(options, sourceString, targetString, _alignments)
         // reorder alignments to match source order
-        _alignment = _this.alignmentBySourceTokens(tokenizer.tokenize(sourceString), _alignment)
+        _alignment = _this.alignmentBySourceTokens(options, tokenizer.tokenize(sourceString), _alignment)
         _alignment.forEach(function(row, index) {
           alignment.push(row)
         })

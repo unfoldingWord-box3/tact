@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 var tact = require('./tact/tact.js')
+var _options = require('config').Client
 
 var cli = require('cli')
 var options = cli.parse({
@@ -16,7 +17,7 @@ function progress(percent) {
 tact.corpus.parseFiles(options.sourceFile, options.targetFile, function(alignmentPairs) {
   alignmentPairs = alignmentPairs.slice(options.first,options.first+options.count)
   // console.time('alignment-1')
-  tact.aligning.align(alignmentPairs, progress, function(alignments) {
+  tact.aligning.align(_options, alignmentPairs, progress, function(alignments) {
     console.log(JSON.stringify(alignments, null, 2))
     // console.timeEnd('alignment-1')
   })

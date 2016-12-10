@@ -1,5 +1,5 @@
-var config = require('../config.js')
 var tools = require('./tools.js')
+var ngram = require('./ngram.js')
 var table = require('./table.js')
 var scoring = require('./scoring.js')
 
@@ -7,13 +7,13 @@ var phraseTable = {
   tableName: 'phrases',
   table: table,
   phraseIndex: {},
-  prune: function(sourceString, targetString, callback) {
-    table.phrases(this.tableName, sourceString, targetString, callback)
+  prune: function(options, sourceString, targetString, callback) {
+    table.phrases(options, this.tableName, sourceString, targetString, callback)
   },
 
-  append: function(source, index) {
+  append: function(options, source, index) {
     var _this = this
-    var sourceArray = tools.ngram(source, config.global.ngram.source)
+    var sourceArray = ngram.ngram(source, options.global.ngram.source)
     sourceArray.forEach(function(sourcePhrase, _index) {
       if (_this.phraseIndex[sourcePhrase] === undefined) {
         _this.phraseIndex[sourcePhrase] = []
@@ -23,20 +23,20 @@ var phraseTable = {
   },
 
   // can pass in table so that it can incriment counts
-  generate: function(trainingSet, progress, callback) {
+  generate: function(options, trainingSet, progress, callback) {
     var __this = this
-    table.init(this.tableName, function(){
+    table.init(options, this.tableName, function(){
       // loop through trainingSet
       // generate ngrams of source and target
       var count = trainingSet.length
       console.log("indexing phrases...")
       trainingSet.forEach(function(pair, index) {
         var source = pair[0]
-        __this.append(source, index)
+        __this.append(options, source, index)
       })
       progress(0.33)
       console.log("storing phraseIndex...")
-      table.store(__this.tableName, __this.phraseIndex, trainingSet, progress, function() {
+      table.store(options, __this.tableName, __this.phraseIndex, trainingSet, progress, function() {
         __this.phraseIndex = {}
         callback()
       })

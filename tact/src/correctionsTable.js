@@ -1,4 +1,3 @@
-var config = require('../config.js')
 var tools = require('./tools.js')
 var table = require('./table.js')
 var scoring = require('./scoring.js')
@@ -8,8 +7,8 @@ var correctionsTable = {
   tableName: 'corrections',
   table: table,
   phraseIndex: {},
-  prune: function(sourceString, targetString, callback) {
-    table.phrases(this.tableName, sourceString, targetString, function(alignments) {
+  prune: function(options, sourceString, targetString, callback) {
+    table.phrases(options, this.tableName, sourceString, targetString, function(alignments) {
       callback(alignments)
     })
   },
@@ -22,9 +21,9 @@ var correctionsTable = {
   },
 
   // can pass in table so that it can incriment counts
-  generate: function(trainingSet, progress, callback) {
+  generate: function(options, trainingSet, progress, callback) {
     var __this = this
-    table.init(this.tableName, function(){
+    table.init(options, this.tableName, function(){
       // loop through trainingSet
       // generate ngrams of source and target
       var count = trainingSet.length
@@ -35,7 +34,7 @@ var correctionsTable = {
       })
       progress(0.33)
       console.log("storing phraseIndex...")
-      table.store(__this.tableName, __this.phraseIndex, trainingSet, progress, function() {
+      table.store(options, __this.tableName, __this.phraseIndex, trainingSet, progress, function() {
         __this.phraseIndex = {}
         callback()
       })

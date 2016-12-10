@@ -2,6 +2,7 @@
 var chai = require('chai')
 var assert = chai.assert
 var tact = require('./../tact/tact.js')
+var options = require('config').Client
 
 function reverse(s) {
   return s.split('').reverse().join('')
@@ -21,7 +22,7 @@ sources.forEach(function(string, index){ corpus.push([string, targets[index]]) }
 describe('aligning.align', function() {
   it('should return alignments', function(done) {
     function progress(){}
-    tact.aligning.align(corpus, progress, function(alignments) {
+    tact.aligning.align(options, corpus, progress, function(alignments) {
       assert.isArray(alignments)
       assert.equal(alignments.length, corpus.length)
       var firstPairAlignment = alignments[0]
