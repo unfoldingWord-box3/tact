@@ -20,7 +20,7 @@ var wordAligner = {
         if (best !== undefined && neededSource.match(regexSource) != null) {
           neededSource = neededSource.replace(regexSource, '  ')
           neededTarget = neededTarget.replace(regexTarget, '  ')
-          available = _this.penalizeUnneeded(options, best, available, neededSource, neededTarget)
+          available = _this.penalizeUnneeded(options, available, neededSource, neededTarget)
           available = _this.removeUnneededSources(available)
           var bestPair = [best.source, best.target, best.score]
           alignment.push(bestPair)
@@ -56,15 +56,16 @@ var wordAligner = {
     return row
   },
   // penalize remaining alignments so that they are less likely to be selected
-  penalizeUnneeded: function(options, row, available, neededSource, neededTarget) {
+  penalizeUnneeded: function(options, available, neededSource, neededTarget) {
     var _this = this
     if (options.align.features.penalties) {
       available.forEach(function(_row, index) {
         if (!_row.correction) {
           _row = _this.isNeeded(_row, neededSource, neededTarget)
           if (!_row.targetNeeded) {
-            var newScore = row.score/options.align.penalties.conflict
-            available[index].score = Math.round( newScore * 1000) / 1000
+            var newScore = _row.score/options.align.penalties.conflict
+            _row.score = Math.round( newScore * 1000) / 1000
+            // if (Number.isNaN(_row.score)) console.log(_row)
           }
         }
       })
@@ -77,6 +78,7 @@ var wordAligner = {
       return b.score - a.score
     })
     var alignment = alignments.shift()
+    // if (Number.isNaN(alignment.score)) console.log(alignment)
     callback(alignment, alignments)
   },
   // this function could be optimized by passing in alignment as an object instead of array
@@ -160,6 +162,7 @@ var wordAligner = {
         // reorder alignments to match source order
         _alignment = _this.alignmentBySourceTokens(options, tokenizer.tokenize(sourceString), _alignment)
         _alignment.forEach(function(row, index) {
+          // if (Number.isNaN(row[2])) console.log(row)
           alignment.push(row)
         })
         callback(alignment)

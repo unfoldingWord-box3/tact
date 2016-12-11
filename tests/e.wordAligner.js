@@ -46,6 +46,19 @@ describe('wordAligner', function() {
       })
     })
   })
+  it('penalizeUnneeded() should update alignments', function(done) {
+    tact.phraseTable.generate(options, corpus, function(){}, function() {
+      tact.correctionsTable.generate(options, corrections, function(){}, function() {
+        tact.wordAligner.alignments(options, 'taco world', 'ocat dlrow', function(alignments) {
+          var scoreBefore = alignments[0].score
+          tact.wordAligner.penalizeUnneeded(options, alignments, alignments[0].source, 'fdsa')
+          var scoreAfter = alignments[0].score
+          assert.isBelow(scoreAfter, scoreBefore)
+          done()
+        })
+      })
+    })
+  })
   it('removeUnneededSources() should remove elements', function(done) {
     tact.phraseTable.generate(options, corpus, function(){}, function() {
       tact.correctionsTable.generate(options, corrections, function(){}, function() {

@@ -3,25 +3,25 @@ var ngram = require('./ngram.js')
 var tokenizer = require('./tokenizer.js')
 
 var scoring = {
-  ratioScore: function(row) {
-    row.localSourceRatio = row.tally / row.localSourceTotal
-    row.globalSourceRatio = Math.round(row.tally / row.globalSourceTotal * 1000) / 1000
-    row.sourceUniqueness = Math.round(row.localSourceTotal / row.globalSourceTotal * 1000) / 1000
-    row.ratioScore = (3*row.globalSourceRatio + 2*row.localSourceRatio + 1*(1-row.sourceUniqueness))/6
-    return row
+  ratioScore: function(alignment) {
+    alignment.localSourceRatio = alignment.tally / alignment.localSourceTotal
+    alignment.globalSourceRatio = Math.round(alignment.tally / alignment.globalSourceTotal * 1000) / 1000
+    alignment.sourceUniqueness = Math.round(alignment.localSourceTotal / alignment.globalSourceTotal * 1000) / 1000
+    alignment.ratioScore = (3*alignment.globalSourceRatio + 2*alignment.localSourceRatio + 1*(1-alignment.sourceUniqueness))/6
+    return alignment
   },
   // favor phrases over words
-  ngramScore: function(options, row) {
-    var sourceNgramCount = tokenizer.tokenize(row.source).length
-    var targetNgramCount = tokenizer.tokenize(row.target).length
+  ngramScore: function(options, alignment) {
+    var sourceNgramCount = tokenizer.tokenize(alignment.source).length
+    var targetNgramCount = tokenizer.tokenize(alignment.target).length
     var sourceNgramScore = options.align.ngrams.sourceScores[sourceNgramCount]
     var targetNgramScore = options.align.ngrams.targetScores[targetNgramCount]
-    row.ngramScore = (sourceNgramScore + targetNgramScore) / 2
-    if (row.correction) {
+    alignment.ngramScore = (sourceNgramScore + targetNgramScore) / 2
+    if (alignment.correction) {
       var deltaNgramMax = Math.abs(options.global.ngram.target - sourceNgramCount)
-      row.ngramScore = 1/(deltaNgramMax+1)
+      alignment.ngramScore = 1/(deltaNgramMax+1)
     }
-    return row
+    return alignment
   },
   // favor words/phrases that occur same number of times in source and target
   phraseCountScore: function(sourcePhrase, targetPhrase, sourceNgramArray, targetNgramArray) {
@@ -45,6 +45,7 @@ var scoring = {
     })
     var deltaRatioSum = deltaRatios.reduce(function(a,b) {return a+b}, 0)
     var deltaRatioAvg = deltaRatioSum/deltaRatios.length
+    if (Number.isNaN(deltaRatioAvg)) console.log('wordOrderScore: ', sourceIndices, targetIndices, sourcePhrase, targetPhrase, sourceString, targetString)
     return (1 - deltaRatioAvg)
   },
   //favor words/ngrams around the same length relative to their language length
@@ -63,43 +64,44 @@ var scoring = {
       wordOrderScore: this.wordOrderScore(sourcePhrase, targetPhrase, sourceSegment, targetSegment)
     }
   },
-  // score the row based on the criteria such as ngram length
-  score: function(options, sourceString, targetString, row) {
+  // score the alignment based on the criteria such as ngram length
+  score: function(options, sourceString, targetString, alignment) {
     var sourceNgramArray = ngram.ngram(sourceString, options.global.ngram.source)
     var targetNgramArray = ngram.ngram(targetString, options.global.ngram.target)
-    row.weightSum = tools.sum(options.align.weights)
-    row = this.ratioScore(row)
-    row = this.ngramScore(options, row)
-    var sourcePhrase = row.source, targetPhrase = row.target
+    alignment.weightSum = tools.sum(options.align.weights)
+    alignment = this.ratioScore(alignment)
+    alignment = this.ngramScore(options, alignment)
+    var sourcePhrase = alignment.source, targetPhrase = alignment.target
 
     if (options.global.features.staticScores) {
       var _phraseCountScore = this.phraseCountScore(sourcePhrase, targetPhrase, sourceNgramArray, targetNgramArray)
       var _wordOrderScore = this.wordOrderScore(sourcePhrase, targetPhrase, sourceString, targetString)
       var ratios = options.align.staticScoreRatios
-      row.phraseCountScore = row.staticScore.phraseCountScore * ratios.phraseCount + _phraseCountScore * (1-ratios.wordOrder)
-      row.wordOrderScore = row.staticScore.wordOrderScore * ratios.wordOrder + _wordOrderScore * (1-ratios.wordOrder)
+      alignment.phraseCountScore = alignment.staticScore.phraseCountScore * ratios.phraseCount + _phraseCountScore * (1-ratios.wordOrder)
+      alignment.wordOrderScore = alignment.staticScore.wordOrderScore * ratios.wordOrder + _wordOrderScore * (1-ratios.wordOrder)
     } else {
-      row.phraseCountScore = this.phraseCountScore(sourcePhrase, targetPhrase, sourceNgramArray, targetNgramArray)
-      row.wordOrderScore = this.wordOrderScore(sourcePhrase, targetPhrase, sourceString, targetString)
+      alignment.phraseCountScore = this.phraseCountScore(sourcePhrase, targetPhrase, sourceNgramArray, targetNgramArray)
+      alignment.wordOrderScore = this.wordOrderScore(sourcePhrase, targetPhrase, sourceString, targetString)
     }
 
-    row.sizeDeltaScore = this.sizeDeltaScore(sourcePhrase, targetPhrase, sourceString, targetString)
+    alignment.sizeDeltaScore = this.sizeDeltaScore(sourcePhrase, targetPhrase, sourceString, targetString)
 
-    if (row.correction) {
-      row.weightSum = row.weightSum + options.align.weights.ngram * (options.align.corrections.ngramMultiplier - 1)
+    if (alignment.correction) {
+      alignment.weightSum = alignment.weightSum + options.align.weights.ngram * (options.align.corrections.ngramMultiplier - 1)
     }
-    row.score = (
-      options.align.weights.ratio * row.ratioScore +
-      options.align.weights.ngram * (row.correction ? options.align.corrections.ngramMultiplier : 1) * row.ngramScore +
-      options.align.weights.phraseCount * row.phraseCountScore +
-      options.align.weights.wordOrder * row.wordOrderScore +
-      options.align.weights.sizeDelta * row.sizeDeltaScore
-    ) / row.weightSum
-    if (row.correction == true) {
-      row.score = row.score + options.align.bonus.correction
+    alignment.score = (
+      options.align.weights.ratio * alignment.ratioScore +
+      options.align.weights.ngram * (alignment.correction ? options.align.corrections.ngramMultiplier : 1) * alignment.ngramScore +
+      options.align.weights.phraseCount * alignment.phraseCountScore +
+      options.align.weights.wordOrder * alignment.wordOrderScore +
+      options.align.weights.sizeDelta * alignment.sizeDeltaScore
+    ) / alignment.weightSum
+    if (alignment.correction == true) {
+      alignment.score = alignment.score + options.align.bonus.correction
     }
-    row.score = Math.round(row.score * 1000) / 1000
-    return row
+    alignment.score = Math.round(alignment.score * 1000) / 1000
+    // if (Number.isNaN(alignment.score)) {console.log(alignment)}
+    return alignment
   }
 }
 

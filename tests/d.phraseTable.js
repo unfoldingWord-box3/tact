@@ -2,35 +2,47 @@
 var chai = require('chai')
 var assert = chai.assert
 var tact = require('./../tact/tact.js')
+var corpusFaker = require('./../tact/src/corpusFaker.js')
 var options = require('config').Client
 
 function reverse(s) {
   return s.split('').reverse().join('')
 }
 
-var sources = [
-  "hello", "hello george", "hello taco", "hello all", "say hello", "no hello", "say hello to all",
-  "world", "the world", "world reign", "save the world", "world of worlds", "king of the world", "hello to the world",
-  "taco", "taco tuesdays", "i like tacos", "tacos taste good", "why tacos"
-]
-var targets = []
-sources.forEach(function(string, index){ targets.push(reverse(string)) })
-var corpus = []
-sources.forEach(function(string, index){ corpus.push([string, targets[index]]) })
-var pairForAlignment = ["hello taco world", "dlrow ocat olleh"]
+var lexicon = corpusFaker.lexicon(100)
+var corpus = corpusFaker.lexiconCorpusGenerate(1000, lexicon)
+var pairForAlignment = corpusFaker.lexiconSentencePair(3, lexicon)
 
 describe('phraseTable', function() {
   it('generate() should add rows to the table', function(done) {
     tact.phraseTable.generate(options, corpus, function(){}, function() {
       tact.phraseTable.table.getCount(options, tact.phraseTable.tableName, function(count) {
-        assert.equal(count, 2)
+        assert.isAtLeast(count, 1)
+        assert.isAtMost(count, 3)
         done()
       })
     })
   })
   it('prune() with one word pair should return 1 row', function(done) {
-    tact.phraseTable.prune(options, 'hello', 'olleh', function(all) {
+    var alignmentPair = corpus[0]
+    tact.phraseTable.prune(options, alignmentPair[0].split(' ')[0], alignmentPair[1].split(' ')[1], function(all) {
       assert.equal(all.length, 1)
+      done()
+    })
+  })
+  it('prune() with a long alignment pair should return lots of alignment options', function(done) {
+    var alignmentPair = corpusFaker.lexiconSentencePair(20, lexicon)
+    tact.phraseTable.prune(options, alignmentPair[0], alignmentPair[1], function(all) {
+      assert.isAtLeast(all.length, 24)
+      done()
+    })
+  })
+  it('prune() with a long alignment pair should not have any alignments with a score of NaN', function(done) {
+    var alignmentPair = corpusFaker.lexiconSentencePair(50, lexicon)
+    tact.phraseTable.prune(options, alignmentPair[0], alignmentPair[1], function(alignments) {
+      alignments.forEach(function(alignment, index) {
+        assert.isNotNaN(alignment.score)
+      })
       done()
     })
   })
