@@ -31,7 +31,7 @@ describe('wordAligner', function() {
   it('isNeeded() should update alignments', function(done) {
     tact.phraseTable.generate(options, corpus, function(){}, function() {
       tact.correctionsTable.generate(options, corrections, function(){}, function() {
-        tact.wordAligner.alignments(options, 'hello world', 'olleh dlrow', function(alignments) {
+        tact.wordAligner.alignments(options, ['hello world', 'olleh dlrow'], function(alignments) {
           tact.wordAligner.isNeeded(alignments[0], 'asdf', alignments[0].target)
           assert.isNotTrue(alignments[0].sourceNeeded)
           assert.isTrue(alignments[0].targetNeeded)
@@ -49,7 +49,7 @@ describe('wordAligner', function() {
   it('penalizeUnneeded() should update alignments', function(done) {
     tact.phraseTable.generate(options, corpus, function(){}, function() {
       tact.correctionsTable.generate(options, corrections, function(){}, function() {
-        tact.wordAligner.alignments(options, 'taco world', 'ocat dlrow', function(alignments) {
+        tact.wordAligner.alignments(options, ['taco world', 'ocat dlrow'], function(alignments) {
           var scoreBefore = alignments[0].score
           tact.wordAligner.penalizeUnneeded(options, alignments, alignments[0].source, 'fdsa')
           var scoreAfter = alignments[0].score
@@ -62,7 +62,7 @@ describe('wordAligner', function() {
   it('removeUnneededSources() should remove elements', function(done) {
     tact.phraseTable.generate(options, corpus, function(){}, function() {
       tact.correctionsTable.generate(options, corrections, function(){}, function() {
-        tact.wordAligner.alignments(options, 'hello world', 'olleh dlrow', function(alignments) {
+        tact.wordAligner.alignments(options, ['hello world', 'olleh dlrow'], function(alignments) {
           var count = alignments.length
           alignments[0].sourceNeeded = false
           alignments[count-1].sourceNeeded = false

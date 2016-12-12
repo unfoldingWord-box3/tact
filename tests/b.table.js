@@ -12,10 +12,16 @@ var score = {
 
 var trainingSet = [["hello taco world", "dlrow ocat olleh"]]
 
-var phraseIndex = {
+var sourceIndex = {
   "hello": [0],
   "world": [0],
   "taco": [0]
+}
+
+var targetIndex = {
+  "olleh": [0],
+  "dlrow": [0],
+  "ocat": [0]
 }
 
 describe('table', function() {
@@ -28,21 +34,22 @@ describe('table', function() {
     })
   })
   it('store() should add rows to the table', function(done) {
-    tact.table.store(options, tableName, phraseIndex, trainingSet, function(){}, function() {
+    tact.table.store(options, tableName, sourceIndex, targetIndex, trainingSet, function(){}, function() {
       tact.table.getCount(options, tableName, function(count) {
-        assert.equal(count, 2)
+        assert.equal(count, 3)
         done()
       })
     })
   })
   it('phrases() should return tableRows with totals in each row', function(done) {
     var sourceString = 'hello', targetString = 'olleh'
-    tact.table.phrases(options, tableName, sourceString, targetString, function(alignments) {
+    tact.table.phrases(options, tableName, [sourceString, targetString], function(alignments) {
       var row = alignments[0]
-      assert.equal(row.localSourceTotal, 1)
-      // assert.equal(row.localTargetTotal, 3)
+      assert.equal(row.tally, 1)
+      assert.equal(row.localSourceTotal, 6)
+      assert.equal(row.localTargetTotal, 5)
       assert.equal(row.globalSourceTotal, 6)
-      // assert.equal(row.globalTargetTotal, 6)
+      assert.equal(row.globalTargetTotal, 5)
       done()
     })
   })

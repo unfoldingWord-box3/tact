@@ -6,10 +6,10 @@ var tokenizer = require('./tokenizer')
 
 var wordAligner = {
   // determine the combination of best rows for highest combined score
-  bestAlignments: function(options, sourceString, targetString, _alignmentData) {
+  bestAlignments: function(options, alignmentPair, _alignmentData) {
     var alignment = [] // response
-    var neededSource = tokenizer.tokenize(sourceString).join(' ')
-    var neededTarget = tokenizer.tokenize(targetString).join(' ')
+    var neededSource = tokenizer.tokenize(alignmentPair[0]).join(' ')
+    var neededTarget = tokenizer.tokenize(alignmentPair[1]).join(' ')
     var available = _alignmentData.slice(0)
     do { // use all source words
       var _this = this
@@ -137,10 +137,10 @@ var wordAligner = {
     return orderedAlignment
   },
 
-  alignments: function(options, sourceString, targetString, callback) {
+  alignments: function(options, alignmentPair, callback) {
     var _alignments = []
-    phraseTable.prune(options, sourceString, targetString, function(_phraseTable) {
-      correctionsTable.prune(options, sourceString, targetString, function(_correctionsTable) {
+    phraseTable.prune(options, alignmentPair, function(_phraseTable) {
+      correctionsTable.prune(options, alignmentPair, function(_correctionsTable) {
         _alignments = _correctionsTable.concat(_phraseTable)
         callback(_alignments)
       })
@@ -148,17 +148,17 @@ var wordAligner = {
   },
 
   // main alignment function that calls the other functions internally
-  align: function(options, pairForAlignment, callback) {
+  align: function(options, alignmentPair, callback) {
     var alignment = [] // response
-    var sourceString = pairForAlignment[0]
-    var targetString = pairForAlignment[1]
+    var sourceString = alignmentPair[0]
+    var targetString = alignmentPair[1]
     if (sourceString == '' || targetString == '') {
       callback(alignment)
     } else {
       var _this = this
-      this.alignments(options, sourceString, targetString, function(_alignments) {
+      this.alignments(options, alignmentPair, function(_alignments) {
         // process of elimination
-        var _alignment = _this.bestAlignments(options, sourceString, targetString, _alignments)
+        var _alignment = _this.bestAlignments(options, alignmentPair, _alignments)
         // reorder alignments to match source order
         _alignment = _this.alignmentBySourceTokens(options, tokenizer.tokenize(sourceString), _alignment)
         _alignment.forEach(function(row, index) {

@@ -10,7 +10,7 @@ function reverse(s) {
 
 describe('scoring', function() {
   it('ratioScore() should calculate ratios from tallies', function(done) {
-    var alignment = {source: 'a', target: 'b', tally: 2, localSourceTotal: 3, globalSourceTotal: 9 }
+    var alignment = {source: 'a', target: 'b', tally: 2, localSourceTotal: 3, globalSourceTotal: 9, localTargetTotal: 3, globalTargetTotal: 9}
     var alignment = tact.scoring.ratioScore(alignment)
     assert.isAtLeast(alignment.localSourceRatio, 0)
     assert.isAtMost(alignment.localSourceRatio, 1)
@@ -64,16 +64,16 @@ describe('scoring', function() {
   })
   it('sizeDeltaScore() should calculate score', function(done) {
     var alignmentPair = ['a b d c', 'c b a d']
-    var alignment = {source: 'a', target: 'b', tally: 2, localSourceTotal: 3, globalSourceTotal: 9 }
+    var alignment = {source: 'a', target: 'b', tally: 2, localSourceTotal: 3, globalSourceTotal: 9, localTargetTotal: 3, globalTargetTotal: 9}
     var sizeDeltaScore = tact.scoring.sizeDeltaScore(alignment.source, alignment.target, alignmentPair[0], alignmentPair[1])
     assert.isAtLeast(sizeDeltaScore, 0)
     assert.isAtMost(sizeDeltaScore, 1)
-    var alignment = {source: 'a b d', target: 'b a d', tally: 2, localSourceTotal: 3, globalSourceTotal: 9 }
+    var alignment = {source: 'a b d', target: 'b a d', tally: 2, localSourceTotal: 3, globalSourceTotal: 9, localTargetTotal: 3, globalTargetTotal: 9}
     var sizeDeltaScore = tact.scoring.sizeDeltaScore(alignment.source, alignment.target, alignmentPair[0], alignmentPair[1])
     assert.isAtLeast(sizeDeltaScore, 0)
     assert.isAtMost(sizeDeltaScore, 1)
     var alignmentPair = ['a b, d c', 'c b-a d']
-    var alignment = {source: 'a b d', target: 'b a d', tally: 2, localSourceTotal: 3, globalSourceTotal: 9 }
+    var alignment = {source: 'a b d', target: 'b a d', tally: 2, localSourceTotal: 3, globalSourceTotal: 9, localTargetTotal: 3, globalTargetTotal: 9}
     var sizeDeltaScore = tact.scoring.sizeDeltaScore(alignment.source, alignment.target, alignmentPair[0], alignmentPair[1])
     assert.isAtLeast(sizeDeltaScore, 0)
     assert.isAtMost(sizeDeltaScore, 1)
@@ -81,17 +81,17 @@ describe('scoring', function() {
   })
   it('score() should calculate score', function(done) {
     var alignmentPair = ['a b d c', 'c b a d']
-    var alignment = {source: 'a', target: 'b', tally: 2, localSourceTotal: 3, globalSourceTotal: 9, staticScore: {phraseCountScore: 1, wordOrderScore: 1}}
-    var alignment = tact.scoring.score(options, alignmentPair[0], alignmentPair[1], alignment)
+    var alignment = {source: 'a', target: 'b', tally: 2, localSourceTotal: 3, globalSourceTotal: 9, localTargetTotal: 3, globalTargetTotal: 9, staticScore: {phraseCountScore: 1, wordOrderScore: 1}}
+    var alignment = tact.scoring.score(options, alignmentPair, alignment)
     assert.isAtLeast(alignment.score, 0)
     assert.isAtMost(alignment.score, 1)
-    var alignment = {source: 'a b d', target: 'b a d', tally: 2, localSourceTotal: 3, globalSourceTotal: 9, staticScore: {phraseCountScore: 1, wordOrderScore: 1}}
-    var alignment = tact.scoring.score(options, alignmentPair[0], alignmentPair[1], alignment)
+    var alignment = {source: 'a b d', target: 'b a d', tally: 2, localSourceTotal: 3, globalSourceTotal: 9, localTargetTotal: 3, globalTargetTotal: 9, staticScore: {phraseCountScore: 1, wordOrderScore: 1}}
+    var alignment = tact.scoring.score(options, alignmentPair, alignment)
     assert.isAtLeast(alignment.score, 0)
     assert.isAtMost(alignment.score, 1)
     var alignmentPair = ['a b, d c', 'c b-a d']
-    var alignment = {source: 'a b d', target: 'b a d', tally: 2, localSourceTotal: 3, globalSourceTotal: 9, staticScore: {phraseCountScore: 1, wordOrderScore: 1}}
-    var alignment = tact.scoring.score(options, alignmentPair[0], alignmentPair[1], alignment)
+    var alignment = {source: 'a b d', target: 'b a d', tally: 2, localSourceTotal: 3, globalSourceTotal: 9, localTargetTotal: 3, globalTargetTotal: 9, staticScore: {phraseCountScore: 1, wordOrderScore: 1}}
+    var alignment = tact.scoring.score(options, alignmentPair, alignment)
     assert.isAtLeast(alignment.score, 0)
     assert.isAtMost(alignment.score, 1)
     done()

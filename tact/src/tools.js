@@ -2,6 +2,23 @@ var tokenizer = require('./tokenizer.js')
 
 var tools = {
 
+  intersect: function(a, b) {
+    a.sort()
+    b.sort()
+    var intersection = []
+    var ai=0, bi=0
+    do {
+       if      (a[ai] < b[bi] ){ ai++ }
+       else if (a[ai] > b[bi] ){ bi++ }
+       else { /* they're equal */
+         intersection.push(a[ai])
+         ai++
+         bi++
+       }
+    } while ( ai < a.length && bi < b.length )
+    return intersection
+  },
+
   getIndicesOf: function(phrase, string) {
     var phraseLength = phrase.length
     if (phraseLength == 0) return []

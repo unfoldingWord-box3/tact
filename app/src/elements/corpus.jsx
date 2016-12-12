@@ -174,7 +174,7 @@ class CorpusForm extends React.Component {
           function() { console.log('corrections complete') },
           function() {
             console.log('training complete')
-            tact.aligning.align(_this.state.options, corpus,
+            tact.aligning.align(_this.state.options, corpus.slice(0,20),
               function(percent) {
                 if (percent != _this.state.aligningProgress) {
                   _this.setState({aligningProgress: percent})

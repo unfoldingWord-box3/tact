@@ -32,9 +32,9 @@ describe('training.train', function() {
     function correctionsCallback() {}
     function callback() {
       tact.phraseTable.table.getCount(options, tact.phraseTable.tableName, function(count) {
-        assert.equal(count, 2)
+        assert.equal(count, 3)
         tact.correctionsTable.table.getCount(options, tact.correctionsTable.tableName, function(count) {
-          assert.equal(count, 2)
+          assert.equal(count, 3)
           done()
         })
       })

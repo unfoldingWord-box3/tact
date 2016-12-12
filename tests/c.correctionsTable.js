@@ -19,31 +19,31 @@ describe('correctionsTable', function() {
   it('generate() should add rows to the table', function(done) {
     tact.correctionsTable.generate(options, corpus, function(){}, function() {
       tact.correctionsTable.table.getCount(options, tact.correctionsTable.tableName, function(count) {
-        assert.isAtLeast(count, 1)
+        assert.equal(count, 3)
         done()
       })
     })
   })
   it('prune() with one word pair should return 1 row', function(done) {
-    tact.correctionsTable.prune(options, 'hello', 'olleh', function(alignments) {
+    tact.correctionsTable.prune(options, ['hello', 'olleh'], function(alignments) {
       assert.equal(alignments.length, 1)
       done()
     })
   })
   it('prune() with two word pair should return 1 row', function(done) {
-    tact.correctionsTable.prune(options, 'taco tuesdays', 'syadseut ocat', function(alignments) {
+    tact.correctionsTable.prune(options, corpus[2], function(alignments) {
       assert.equal(alignments.length, 1)
       done()
     })
   })
-  it('prune() with should find corrections for sub strings', function(done) {
-    tact.correctionsTable.prune(options, 'hello taco tuesdays', 'syadseut ocat olleh', function(alignments) {
+  it('prune() should find corrections for sub strings', function(done) {
+    tact.correctionsTable.prune(options, ['hello taco tuesdays', 'syadseut ocat olleh'], function(alignments) {
       assert.equal(alignments.length, 2)
       done()
     })
   })
   it('prune() should not return a substring rule from a multi token entry', function(done) {
-    tact.correctionsTable.prune(options, 'taco', 'ocat', function(alignments) {
+    tact.correctionsTable.prune(options, ['taco', 'ocat'], function(alignments) {
       assert.equal(alignments.length, 0)
       done()
     })

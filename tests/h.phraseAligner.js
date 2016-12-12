@@ -33,7 +33,6 @@ describe('phraseAligner', function() {
     tact.phraseTable.generate(options, corpus, function(){}, function() {
       tact.correctionsTable.generate(options, corrections, function(){}, function() {
         tact.phraseAligner.align(options, sourcePhrase, alignmentPair, function(alignments) {
-          console.log(alignments)
           var alignedSource = []
           alignments.forEach(function(alignment) {
             alignedSource.push(alignment[0])

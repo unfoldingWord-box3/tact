@@ -7,7 +7,18 @@ var scoring = {
     alignment.localSourceRatio = alignment.tally / alignment.localSourceTotal
     alignment.globalSourceRatio = Math.round(alignment.tally / alignment.globalSourceTotal * 1000) / 1000
     alignment.sourceUniqueness = Math.round(alignment.localSourceTotal / alignment.globalSourceTotal * 1000) / 1000
-    alignment.ratioScore = (3*alignment.globalSourceRatio + 2*alignment.localSourceRatio + 1*(1-alignment.sourceUniqueness))/6
+    alignment.localTargetRatio = alignment.tally / alignment.localTargetTotal
+    alignment.globalTargetRatio = Math.round(alignment.tally / alignment.globalTargetTotal * 1000) / 1000
+    alignment.targetUniqueness = Math.round(alignment.localTargetTotal / alignment.globalTargetTotal * 1000) / 1000
+    alignment.ratioScore = (
+      3*alignment.globalSourceRatio +
+      3*alignment.globalTargetRatio +
+      2*alignment.localSourceRatio +
+      2*alignment.localTargetRatio +
+      1*(1-alignment.sourceUniqueness) +
+      1*(1-alignment.targetUniqueness)
+    )/12
+    if (Number.isNaN(alignment.ratioScore)) console.log(alignment)
     return alignment
   },
   // favor phrases over words
@@ -65,7 +76,8 @@ var scoring = {
     }
   },
   // score the alignment based on the criteria such as ngram length
-  score: function(options, sourceString, targetString, alignment) {
+  score: function(options, alignmentPair, alignment) {
+    var sourceString = alignmentPair[0], targetString = alignmentPair[1]
     var sourceNgramArray = ngram.ngram(sourceString, options.global.ngram.source)
     var targetNgramArray = ngram.ngram(targetString, options.global.ngram.target)
     alignment.weightSum = tools.sum(options.align.weights)

@@ -17,29 +17,28 @@ describe('phraseTable', function() {
   it('generate() should add rows to the table', function(done) {
     tact.phraseTable.generate(options, corpus, function(){}, function() {
       tact.phraseTable.table.getCount(options, tact.phraseTable.tableName, function(count) {
-        assert.isAtLeast(count, 1)
-        assert.isAtMost(count, 3)
+        assert.equal(count, 3)
         done()
       })
     })
   })
   it('prune() with one word pair should return 1 row', function(done) {
     var alignmentPair = corpus[0]
-    tact.phraseTable.prune(options, alignmentPair[0].split(' ')[0], alignmentPair[1].split(' ')[1], function(all) {
+    tact.phraseTable.prune(options, [alignmentPair[0].split(' ')[0], alignmentPair[1].split(' ')[1]], function(all) {
       assert.equal(all.length, 1)
       done()
     })
   })
   it('prune() with a long alignment pair should return lots of alignment options', function(done) {
     var alignmentPair = corpusFaker.lexiconSentencePair(20, lexicon)
-    tact.phraseTable.prune(options, alignmentPair[0], alignmentPair[1], function(all) {
+    tact.phraseTable.prune(options, alignmentPair, function(all) {
       assert.isAtLeast(all.length, 24)
       done()
     })
   })
   it('prune() with a long alignment pair should not have any alignments with a score of NaN', function(done) {
     var alignmentPair = corpusFaker.lexiconSentencePair(50, lexicon)
-    tact.phraseTable.prune(options, alignmentPair[0], alignmentPair[1], function(alignments) {
+    tact.phraseTable.prune(options, alignmentPair, function(alignments) {
       alignments.forEach(function(alignment, index) {
         assert.isNotNaN(alignment.score)
       })
