@@ -46,9 +46,9 @@ describe('table', function() {
     tact.table.phrases(options, tableName, [sourceString, targetString], function(alignments) {
       var row = alignments[0]
       assert.equal(row.tally, 1)
-      assert.equal(row.localSourceTotal, 6)
+      assert.equal(row.localSourceTotal, 7)
       assert.equal(row.localTargetTotal, 5)
-      assert.equal(row.globalSourceTotal, 6)
+      assert.equal(row.globalSourceTotal, 7)
       assert.equal(row.globalTargetTotal, 5)
       done()
     })

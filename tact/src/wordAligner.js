@@ -47,9 +47,9 @@ var wordAligner = {
         row.sourceNeeded = false
       }
     }
-    if (row.targetNeeded) { // don't check again if it wasn't needed already
+    if (row.targetNeeded && row.target != ' ') { // don't check again if it wasn't needed already
       var regexTarget = new RegExp("( |^)+?" + row.target + "( |$)+?", '')
-      if (neededTarget.search(regexTarget) == -1) {
+      if ((neededTarget.search(regexTarget) == -1)) {
         row.targetNeeded = false
       }
     }
@@ -63,7 +63,7 @@ var wordAligner = {
         if (!_row.correction) {
           _row = _this.isNeeded(_row, neededSource, neededTarget)
           if (!_row.targetNeeded) {
-            var newScore = _row.score/options.align.penalties.conflict
+            var newScore = _row.score/options.align.penalties.divide - options.align.penalties.subtract
             _row.score = Math.round( newScore * 1000) / 1000
             // if (Number.isNaN(_row.score)) console.log(_row)
           }

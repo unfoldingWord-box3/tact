@@ -6,8 +6,7 @@ var align = function(options, alignmentPairs, progress, callback) {
   console.time('alignment')
   var count = alignmentPairs.length
   var completed = 0
-  // due to sqlite single being threaded, while sql is using i/o, we can work on another.
-  async.mapLimit(alignmentPairs, 1, // increasing more than 2 slows it down. 2 is 1/20 faster
+  async.mapLimit(alignmentPairs, 1, // cpu is currently pegged with just one
     function(alignmentPair, _callback) {
       wordAligner.align(options, alignmentPair, function(alignment) {
         completed++

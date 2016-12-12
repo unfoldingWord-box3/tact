@@ -85,6 +85,8 @@ var table = {
     var alignments = [] // response
     var sourceAlignmentPhrases = ngram.ngram(alignmentPair[0], options.global.ngram.source)
     var targetAlignmentPhrases = ngram.ngram(alignmentPair[1], options.global.ngram.target)
+    // sourceAlignmentPhrases.push(' ')
+    targetAlignmentPhrases.push(' ')
     var sources = {}, targets = {}, permutations = {}
     trainingPairs.forEach(function(trainingPair, i) {
       var sourceTrainingPhrases, targetTrainingPhrases
@@ -94,6 +96,8 @@ var table = {
       } else {
         sourceTrainingPhrases = ngram.ngram(trainingPair[0], options.global.ngram.source)
         targetTrainingPhrases = ngram.ngram(trainingPair[1], options.global.ngram.target)
+        // sourceTrainingPhrases.push(' ')
+        targetTrainingPhrases.push(' ')
       }
 
       var sourceIntersection = tools.intersect(sourceAlignmentPhrases, sourceTrainingPhrases)

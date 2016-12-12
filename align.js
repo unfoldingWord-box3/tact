@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env node --max_old_space_size=4096
 var tact = require('./tact/tact.js')
 var _options = require('config').Client
 

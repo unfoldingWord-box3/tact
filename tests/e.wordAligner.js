@@ -35,12 +35,24 @@ describe('wordAligner', function() {
           tact.wordAligner.isNeeded(alignments[0], 'asdf', alignments[0].target)
           assert.isNotTrue(alignments[0].sourceNeeded)
           assert.isTrue(alignments[0].targetNeeded)
-          tact.wordAligner.isNeeded(alignments[1], alignments[1].source, 'fdsa')
-          assert.isTrue(alignments[1].sourceNeeded)
-          assert.isNotTrue(alignments[1].targetNeeded)
+          tact.wordAligner.isNeeded(alignments[2], alignments[1].source, 'fdsa')
+          assert.isTrue(alignments[2].sourceNeeded)
+          assert.isNotTrue(alignments[2].targetNeeded)
           tact.wordAligner.isNeeded(alignments[2], 'asdf', 'fdsa')
           assert.isNotTrue(alignments[2].sourceNeeded)
           assert.isNotTrue(alignments[2].targetNeeded)
+          done()
+        })
+      })
+    })
+  })
+  it('isNeeded() should not update where target is " " alignments', function(done) {
+    tact.phraseTable.generate(options, corpus, function(){}, function() {
+      tact.correctionsTable.generate(options, corrections, function(){}, function() {
+        tact.wordAligner.alignments(options, ['hello world', 'olleh dlrow'], function(alignments) {
+          tact.wordAligner.isNeeded(alignments[1], alignments[1].source, 'fdsa')
+          assert.isTrue(alignments[1].sourceNeeded)
+          assert.isTrue(alignments[1].targetNeeded)
           done()
         })
       })
@@ -50,9 +62,9 @@ describe('wordAligner', function() {
     tact.phraseTable.generate(options, corpus, function(){}, function() {
       tact.correctionsTable.generate(options, corrections, function(){}, function() {
         tact.wordAligner.alignments(options, ['taco world', 'ocat dlrow'], function(alignments) {
-          var scoreBefore = alignments[0].score
+          var scoreBefore = alignments[1].score
           tact.wordAligner.penalizeUnneeded(options, alignments, alignments[0].source, 'fdsa')
-          var scoreAfter = alignments[0].score
+          var scoreAfter = alignments[1].score
           assert.isBelow(scoreAfter, scoreBefore)
           done()
         })

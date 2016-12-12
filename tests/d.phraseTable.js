@@ -25,7 +25,7 @@ describe('phraseTable', function() {
   it('prune() with one word pair should return 1 row', function(done) {
     var alignmentPair = corpus[0]
     tact.phraseTable.prune(options, [alignmentPair[0].split(' ')[0], alignmentPair[1].split(' ')[1]], function(all) {
-      assert.equal(all.length, 1)
+      assert.equal(all.length, 2)
       done()
     })
   })

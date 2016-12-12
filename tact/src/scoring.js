@@ -36,6 +36,7 @@ var scoring = {
   },
   // favor words/phrases that occur same number of times in source and target
   phraseCountScore: function(sourcePhrase, targetPhrase, sourceNgramArray, targetNgramArray) {
+    if (targetPhrase == ' ') return 0.5
     var sourceMatchCount = tools.countInArray(sourceNgramArray, sourcePhrase)
     var targetMatchCount = tools.countInArray(targetNgramArray, targetPhrase)
     var deltaCount = Math.abs(sourceMatchCount - targetMatchCount)
@@ -43,6 +44,7 @@ var scoring = {
   },
   // favor words/phrases that occur in the same place in the sentence
   wordOrderScore: function(sourcePhrase, targetPhrase, sourceString, targetString) {
+    if (targetPhrase == ' ') return 0.5
     var sourceIndices = tools.getIndicesOf(sourcePhrase, sourceString)
     var targetIndices = tools.getIndicesOf(targetPhrase, targetString)
     sourceIndices = [sourceIndices[0], sourceIndices[sourceIndices.length-1]]
@@ -61,6 +63,7 @@ var scoring = {
   },
   //favor words/ngrams around the same length relative to their language length
   sizeDeltaScore: function(sourcePhrase, targetPhrase, sourceString, targetString) {
+    if (targetPhrase == ' ') return 0.5
     var sourceSizeRatio = sourcePhrase.length/sourceString.length
     var targetSizeRatio = targetPhrase.length/targetString.length
     var deltaSizeRatio = Math.abs(sourceSizeRatio - targetSizeRatio)

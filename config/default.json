@@ -25,7 +25,8 @@
         "penalties": true
       },
       "penalties": {
-        "conflict": 2
+        "divide": 1,
+        "subtract": 0.15
       },
       "bonus": {
         "correction": 1.0
