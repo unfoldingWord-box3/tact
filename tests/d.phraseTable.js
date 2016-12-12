@@ -32,7 +32,7 @@ describe('phraseTable', function() {
   it('prune() with a long alignment pair should return lots of alignment options', function(done) {
     var alignmentPair = corpusFaker.lexiconSentencePair(20, lexicon)
     tact.phraseTable.prune(options, alignmentPair, function(all) {
-      assert.isAtLeast(all.length, 24)
+      assert.isAtLeast(all.length, 10)
       done()
     })
   })
