@@ -1,15 +1,16 @@
-var React = require('react');
-var localforage = require('localforage');
-var tact = require('../../../tact/tact.js');
-var FormGroup = require('react-bootstrap').FormGroup;
-var ControlLabel = require('react-bootstrap').ControlLabel;
-var FormControl = require('react-bootstrap').FormControl;
-var Grid = require('react-bootstrap').Grid;
-var Row = require('react-bootstrap').Row;
-var Col = require('react-bootstrap').Col;
+var React = require('react')
+var localforage = require('localforage')
+var tact = require('../../../tact/tact.js')
+var FormGroup = require('react-bootstrap').FormGroup
+var ControlLabel = require('react-bootstrap').ControlLabel
+var FormControl = require('react-bootstrap').FormControl
+var Grid = require('react-bootstrap').Grid
+var Row = require('react-bootstrap').Row
+var Col = require('react-bootstrap').Col
+var options = require('config')
 
-var AlignmentsList = require('./alignment.jsx');
-var Progress = require('./progress.jsx');
+var AlignmentsList = require('./alignment.jsx')
+var Progress = require('./progress.jsx')
 
 var corpusSource = `BGB - Berean Greek Bible
 Βίβλος γενέσεως Ἰησοῦ Χριστοῦ υἱοῦ Δαυὶδ υἱοῦ Ἀβραάμ.
@@ -30,7 +31,7 @@ var corpusSource = `BGB - Berean Greek Bible
 Ἰακὼβ δὲ ἐγέννησεν τὸν Ἰωσὴφ τὸν ἄνδρα Μαρίας, ἐξ ἧς ἐγεννήθη Ἰησοῦς ὁ λεγόμενος Χριστός.
 Πᾶσαι οὖν αἱ γενεαὶ ἀπὸ Ἀβραὰμ ἕως Δαυὶδ γενεαὶ δεκατέσσαρες, καὶ ἀπὸ Δαυὶδ ἕως τῆς μετοικεσίας Βαβυλῶνος γενεαὶ δεκατέσσαρες, καὶ ἀπὸ τῆς μετοικεσίας Βαβυλῶνος ἕως τοῦ Χριστοῦ γενεαὶ δεκατέσσαρες.
 Τοῦ δὲ Ἰησοῦ Χριστοῦ ἡ γένεσις οὕτως ἦν. μνηστευθείσης τῆς μητρὸς αὐτοῦ Μαρίας τῷ Ἰωσήφ, πρὶν ἢ συνελθεῖν αὐτοὺς εὑρέθη ἐν γαστρὶ ἔχουσα ἐκ πνεύματος ἁγίου.
-Ἰωσὴφ δὲ ὁ ἀνὴρ αὐτῆς, δίκαιος ὢν καὶ μὴ θέλων αὐτὴν δειγματίσαι, ἐβουλήθη λάθρᾳ ἀπολῦσαι αὐτήν.`;
+Ἰωσὴφ δὲ ὁ ἀνὴρ αὐτῆς, δίκαιος ὢν καὶ μὴ θέλων αὐτὴν δειγματίσαι, ἐβουλήθη λάθρᾳ ἀπολῦσαι αὐτήν.`
 
 var corpusTarget = `BLB - Berean Literal Bible
 The book of the genealogy of Jesus Christ, son of David, son of Abraham:
@@ -51,7 +52,7 @@ And Eliud begat Eleazar, and Eleazar begat Matthan, and Matthan begat Jacob,
 And Jacob begat Joseph, the husband of Mary, of whom was born Jesus, the One being called Christ.
 So all the generations from Abraham to David were fourteen generations, and from David until the carrying away to Babylon fourteen generations, and from the carrying away to Babylon to the Christ fourteen generations.
 Now the birth of Jesus Christ came about in this way: His mother Mary, having been pledged to Joseph, before their coming together, was found holding in womb through the Holy Spirit.
-Then Joseph her husband, being righteous and not willing to shame her publicly, resolved to divorce her quietly.`;
+Then Joseph her husband, being righteous and not willing to shame her publicly, resolved to divorce her quietly.`
 
 var correctionsSource = `Βίβλος
 γενέσεως
@@ -77,7 +78,7 @@ var correctionsSource = `Βίβλος
 τοὺς ἀδελφοὺς
 αὐτοῦ
 
-του`;
+του`
 
 var correctionsTarget = `The book of
 the genealogy of
@@ -103,11 +104,11 @@ and
 brothers
 his
 
-the`;
+the`
 
 class CorpusForm extends React.Component {
   constructor(props) {
-    super(props);
+    super(props)
     this.state = {
       trainingProgress: 0,
       aligningProgress: 0,
@@ -115,61 +116,79 @@ class CorpusForm extends React.Component {
       corpusSource: corpusSource,
       corpusTarget: corpusTarget,
       correctionsSource: correctionsSource,
-      correctionsTarget: correctionsTarget
-    };
+      correctionsTarget: correctionsTarget,
+      options: options.get('Client')
+    }
 
-    this.handleCorpusSourceChange = this.handleCorpusSourceChange.bind(this);
-    this.handleCorpusTargetChange = this.handleCorpusTargetChange.bind(this);
-    this.handleCorrectionsSourceChange = this.handleCorrectionsSourceChange.bind(this);
-    this.handleCorrectionsTargetChange = this.handleCorrectionsTargetChange.bind(this);
-    this.handleSubmit = this.handleSubmit.bind(this);
+    this.handleCorpusSourceChange = this.handleCorpusSourceChange.bind(this)
+    this.handleCorpusTargetChange = this.handleCorpusTargetChange.bind(this)
+    this.handleCorrectionsSourceChange = this.handleCorrectionsSourceChange.bind(this)
+    this.handleCorrectionsTargetChange = this.handleCorrectionsTargetChange.bind(this)
+    this.handleOptionsGlobalChange = this.handleOptionsGlobalChange.bind(this)
+    this.handleOptionsAlignChange = this.handleOptionsAlignChange.bind(this)
+    this.handleSubmit = this.handleSubmit.bind(this)
   }
 
   handleCorpusSourceChange(event) {
-    this.setState({corpusSource: event.target.value});
+    this.setState({corpusSource: event.target.value})
   }
   handleCorpusTargetChange(event) {
-    this.setState({corpusTarget: event.target.value});
+    this.setState({corpusTarget: event.target.value})
   }
   handleCorrectionsSourceChange(event) {
-    this.setState({correctionsSource: event.target.value});
+    this.setState({correctionsSource: event.target.value})
   }
   handleCorrectionsTargetChange(event) {
-    this.setState({correctionsTarget: event.target.value});
+    this.setState({correctionsTarget: event.target.value})
+  }
+  handleOptionsGlobalChange(event) {
+    var options = this.state.options
+    options.global = JSON.parse(event.target.value)
+    this.setState({options: options})
+  }
+  handleOptionsAlignChange(event) {
+    var options = this.state.options
+    options.align = JSON.parse(event.target.value)
+    this.setState({options: options})
   }
 
   handleSubmit(event) {
-    event.preventDefault();
-    console.log(this.state);
-    var _this = this;
+    event.preventDefault()
+    console.log(this.state)
+    var _this = this
     tact.corpus.pivot(_this.state.corpusSource.split('\n'), _this.state.corpusTarget.split('\n'), function(corpus) {
       tact.corpus.pivot(_this.state.correctionsSource.split('\n'), _this.state.correctionsTarget.split('\n'), function(corrections) {
         function progress(percent) {
-          console.log(percent);
-        };
-        console.log('corpus was submitted: \n', corpus);
-        tact.training.train(corpus, corrections,
+          // console.log(percent)
+        }
+        console.log('corpus was submitted: \n', corpus)
+        console.log('state.options:\n', _this.state.options)
+        tact.training.train(_this.state.options, corpus, corrections,
           function(percent) {
-            _this.setState({trainingProgress: percent});
+            if (percent != _this.state.trainingProgress) {
+              _this.setState({trainingProgress: percent})
+            }
           },
           progress,
-          function() { console.log('corpus complete'); },
-          function() { console.log('corrections complete'); },
+          function() { console.log('corpus complete') },
+          function() { console.log('corrections complete') },
           function() {
-            console.log('training complete');
-            tact.aligning.align(corpus,
+            console.log('training complete')
+            tact.aligning.align(_this.state.options, corpus.slice(0,20),
               function(percent) {
-                _this.setState({aligningProgress: percent})
+                if (percent != _this.state.aligningProgress) {
+                  _this.setState({aligningProgress: percent})
+                }
               },
               function(alignments) {
-                console.log(alignments);
-                _this.setState({alignments: alignments});
+                console.log(alignments)
+                _this.setState({alignments: alignments})
               }
-            );
+            )
           }
-        );
-      });
-    });
+        )
+      })
+    })
   }
 
   render() {
@@ -204,6 +223,20 @@ class CorpusForm extends React.Component {
               </FormGroup>
             </Col>
           </Row>
+          <Row>
+            <Col xs={6} md={4}>
+              <FormGroup bsSize="small" controlId="sourceCorrections">
+                <ControlLabel>Global Options:</ControlLabel>
+                <FormControl componentClass="textarea" value={JSON.stringify(this.state.options.global, null, 2)} onChange={this.handleOptionsGlobalChange} />
+              </FormGroup>
+            </Col>
+            <Col xs={6} md={4}>
+              <FormGroup bsSize="small" controlId="targetCorrections">
+                <ControlLabel>Align Options:</ControlLabel>
+                <FormControl componentClass="textarea" value={JSON.stringify(this.state.options.align, null, 2)} onChange={this.handleOptionsAlignChange} />
+              </FormGroup>
+            </Col>
+          </Row>
         </Grid>
         <FormGroup controlId="submit">
           <input type="submit" value="Submit" />
@@ -214,7 +247,7 @@ class CorpusForm extends React.Component {
         </FormGroup>
         <AlignmentsList alignments={this.state.alignments} />
       </form>
-    );
+    )
   }
 }
-module.exports = CorpusForm;
+module.exports = CorpusForm

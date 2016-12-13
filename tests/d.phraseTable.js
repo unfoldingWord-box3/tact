@@ -1,45 +1,56 @@
 // tests/aligner.js
-var chai = require('chai');
-var assert = chai.assert;
-var phraseTable = require('./../tact/src/phraseTable.js');
-var tokenizer = require('./../tact/src/tokenizer.js');
+var chai = require('chai')
+var assert = chai.assert
+var tact = require('./../tact/tact.js')
+var corpusFaker = require('./../tact/src/corpusFaker.js')
+var options = require('config').Client
 
 function reverse(s) {
-  return s.split('').reverse().join('');
+  return s.split('').reverse().join('')
 }
 
-var sources = [
-  "hello", "hello george", "hello taco", "hello all", "say hello", "no hello", "say hello to all",
-  "world", "the world", "world reign", "save the world", "world of worlds", "king of the world", "hello to the world",
-  "taco", "taco tuesdays", "i like tacos", "tacos taste good", "why tacos"
-];
-var targets = [];
-sources.forEach(function(string, index){ targets.push(reverse(string)); });
-var corpus = [];
-sources.forEach(function(string, index){ corpus.push([string, targets[index]]); });
-var pairForAlignment = ["hello taco world", "dlrow ocat olleh"];
+var lexicon = corpusFaker.lexicon(100)
+var corpus = corpusFaker.lexiconCorpusGenerate(1000, lexicon)
+var pairForAlignment = corpusFaker.lexiconSentencePair(3, lexicon)
 
 describe('phraseTable', function() {
   it('generate() should add rows to the table', function(done) {
-    phraseTable.generate(corpus, function(){}, function() {
-      phraseTable.table.getCount(phraseTable.tableName, function(count) {
-        assert.equal(count, 42);
-        done();
-      });
-    });
-  });
+    tact.phraseTable.generate(options, corpus, function(){}, function() {
+      tact.phraseTable.table.getCount(options, tact.phraseTable.tableName, function(count) {
+        assert.equal(count, 3)
+        done()
+      })
+    })
+  })
   it('prune() with one word pair should return 1 row', function(done) {
-    phraseTable.prune('hello', 'olleh', function(all) {
-      assert.equal(all.length, 1);
-      done();
-    });
-  });
+    var alignmentPair = corpus[0]
+    tact.phraseTable.prune(options, [alignmentPair[0].split(' ')[0], alignmentPair[1].split(' ')[1]], function(all) {
+      assert.equal(all.length, 2)
+      done()
+    })
+  })
+  it('prune() with a long alignment pair should return lots of alignment options', function(done) {
+    var alignmentPair = corpusFaker.lexiconSentencePair(20, lexicon)
+    tact.phraseTable.prune(options, alignmentPair, function(all) {
+      assert.isAtLeast(all.length, 10)
+      done()
+    })
+  })
+  it('prune() with a long alignment pair should not have any alignments with a score of NaN', function(done) {
+    var alignmentPair = corpusFaker.lexiconSentencePair(50, lexicon)
+    tact.phraseTable.prune(options, alignmentPair, function(alignments) {
+      alignments.forEach(function(alignment, index) {
+        assert.isNotNaN(alignment.score)
+      })
+      done()
+    })
+  })
   it('cleanup() should yield an table count of 0', function(done) {
-    phraseTable.table.cleanup(phraseTable.tableName, function() {
-      phraseTable.table.getCount(phraseTable.tableName, function(count) {
-        assert.equal(count, 0);
-        done();
-      });
-    });
-  });
-});
+    tact.phraseTable.table.cleanup(options, tact.phraseTable.tableName, function() {
+      tact.phraseTable.table.getCount(options, tact.phraseTable.tableName, function(count) {
+        assert.equal(count, 0)
+        done()
+      })
+    })
+  })
+})

@@ -1,32 +1,34 @@
 
-var async = require('async');
+var async = require('async')
 
-var fileLines = function(file, callback) {
-  var lines = []; // response
-  require('fs').readFileSync(file).toString().split(/\r?\n/).forEach(function(line){
-    lines.push(line);
-  });
-  callback(null, lines);
-};
-exports.fileLines = fileLines;
+var corpus = {
 
-var pivot = function(sources, targets, callback) {
-  var corpus = [];
-  sources.forEach(function(sourceString, index) {
-    var targetString = targets[index];
-    corpus.push([sourceString.normalize('NFKC').toLowerCase(), targetString.normalize('NFKC').toLowerCase()]);
-  });
-  callback(corpus);
-};
-exports.pivot = pivot;
+  fileLines: function(file, callback) {
+    var lines = [] // response
+    require('fs').readFileSync(file).toString().split(/\r?\n/).forEach(function(line){
+      lines.push(line)
+    })
+    callback(null, lines)
+  },
 
-exports.parseFiles = function(sourceFile, targetFile, callback) {
-  var corpus = [];
-  async.map(
-    [sourceFile, targetFile],
-    fileLines,
-    function(err, results) {
-      pivot(results[0], results[1], callback);
-    }
-  );
-};
+  pivot: function(sources, targets, callback) {
+    var _corpus = []
+    sources.forEach(function(sourceString, index) {
+      var targetString = targets[index]
+      _corpus.push([sourceString.normalize('NFKC').toLowerCase(), targetString.normalize('NFKC').toLowerCase()])
+    })
+    callback(_corpus)
+  },
+
+  parseFiles: function(sourceFile, targetFile, callback) {
+    async.map(
+      [sourceFile, targetFile],
+      corpus.fileLines,
+      function(err, results) {
+        corpus.pivot(results[0], results[1], callback)
+      }
+    )
+  }
+}
+
+exports = module.exports = corpus

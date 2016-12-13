@@ -1,70 +1,55 @@
-var tools = require('./tools.js');
-var config = require('./config.js');
-var table = require('./table.js');
-var segmenter = require('./segmenter');
+var tools = require('./tools.js')
+var ngram = require('./ngram.js')
+var table = require('./table.js')
+var scoring = require('./scoring.js')
+var tokenizer = require('./tokenizer.js')
 
-exports.table = table;
-var permutations = {};
-var tableName = 'phrases';
-exports.tableName = tableName;
+var phraseTable = {
+  tableName: 'phrases',
+  table: table,
+  sourceIndex: {},
+  targetIndex: {},
+  prune: function(options, alignmentPair, callback) {
+    table.phrases(options, this.tableName, alignmentPair, callback)
+  },
 
-var prune = function(sourceString, targetString, callback) {
-  var sourceNgramArray = tools.ngram(sourceString, config.ngrams.sourceMax);
-  var targetNgramArray = tools.ngram(targetString, config.ngrams.targetMax);
-  table.phrases(tableName, sourceString, targetString, sourceNgramArray, targetNgramArray, function(phrases) {
-    callback(phrases);
-  });
-};
-exports.prune = prune;
-
-var increment = function(sourceNgram, targetNgram) {
-  if (permutations[sourceNgram] === undefined) {
-    permutations[sourceNgram] = {};
-  }
-  if (permutations[sourceNgram][targetNgram] === undefined) {
-    permutations[sourceNgram][targetNgram] = 1;
-  } else {
-    permutations[sourceNgram][targetNgram] = permutations[sourceNgram][targetNgram] + 1;
-  }
-};
-exports.increment = increment;
-
-var append = function(source, target) {
-  var sourceArray = tools.ngram(source, config.ngrams.sourceMax);
-  var targetArray = tools.ngram(target, config.ngrams.targetMax);
-  sourceArray.forEach(function(sourceNgram, index) {
-    targetArray.forEach(function(targetNgram, _index) {
-      increment(sourceNgram, targetNgram);
-    });
-  });
-};
-// can pass in table so that it can incriment counts
-exports.generate = function(trainingSet, progress, callback) {
-  table.init(tableName, function(){
-    // loop through trainingSet
-    // generate ngrams of source and target
-    var count = trainingSet.length;
-    console.log("calculating permutations...");
-    trainingSet.forEach(function(pair, index) {
-      progress((index+1)/count);
-      var source = pair[0];
-      var target = pair[1];
-      if (config.segmentation.corpus) {
-        var sourceSegments = segmenter.segment(source);
-        var targetSegments = segmenter.segment(target);
-        if (sourceSegments.length == targetSegments.length) {
-          sourceSegments.forEach(function(sourceSegment, _index){
-            append(sourceSegment, targetSegments[_index]);
-          });
-        } else {
-          append(source, target);
-        }
-      } else {
-        append(source, target);
+  append: function(options, pair, index) {
+    var source = pair[0], target = pair[1]
+    var sourceWords = tokenizer.tokenize(source)
+    sourceWords.forEach(function(sourceWord, _index) {
+      if (phraseTable.sourceIndex[sourceWord] === undefined) {
+        phraseTable.sourceIndex[sourceWord] = []
       }
-    });
-    trainingSet = [];
-    console.log("storing permutations...");
-    table.bulkInsert(tableName, permutations, progress, callback);
-  });
-};
+      phraseTable.sourceIndex[sourceWord].push(index)
+    })
+    var targetWords = tokenizer.tokenize(target)
+    targetWords.forEach(function(targetWord, _index) {
+      if (phraseTable.targetIndex[targetWord] === undefined) {
+        phraseTable.targetIndex[targetWord] = []
+      }
+      phraseTable.targetIndex[targetWord].push(index)
+    })
+  },
+
+  // can pass in table so that it can incriment counts
+  generate: function(options, trainingSet, progress, callback) {
+    table.init(options, this.tableName, function(){
+      // loop through trainingSet
+      // generate ngrams of source and target
+      var count = trainingSet.length
+      console.log("indexing phrases...")
+      trainingSet.forEach(function(pair, index) {
+        phraseTable.append(options, pair, index)
+      })
+      progress(0.33)
+      console.log("storing phraseIndex...")
+      table.store(options, phraseTable.tableName, phraseTable.sourceIndex, phraseTable.targetIndex, trainingSet, progress, function() {
+        phraseTable.sourceIndex = {}
+        phraseTable.targetIndex = {}
+        callback()
+      })
+    })
+  }
+}
+
+exports = module.exports = phraseTable
