@@ -158,12 +158,14 @@ class CorpusForm extends React.Component {
     var _this = this
     tact.corpus.pivot(_this.state.corpusSource.split('\n'), _this.state.corpusTarget.split('\n'), function(corpus) {
       tact.corpus.pivot(_this.state.correctionsSource.split('\n'), _this.state.correctionsTarget.split('\n'), function(corrections) {
+        var training = new tact.Training(_this.state.options, corpus, corrections)
+        var aligning = new tact.Aligning(_this.state.options)
         function progress(percent) {
           // console.log(percent)
         }
-        console.log('corpus was submitted: \n', corpus)
-        console.log('state.options:\n', _this.state.options)
-        tact.training.train(_this.state.options, corpus, corrections,
+        _this.setState({trainingProgress: 0})
+        _this.setState({aligningProgress: 0})
+        training.train(
           function(percent) {
             if (percent != _this.state.trainingProgress) {
               _this.setState({trainingProgress: percent})
@@ -174,7 +176,13 @@ class CorpusForm extends React.Component {
           function() { console.log('corrections complete') },
           function() {
             console.log('training complete')
-            tact.aligning.align(_this.state.options, corpus.slice(0,20),
+            training.phraseTable.table.sourceIndex(function(sourceIndex) {
+              console.log('sourceIndex: ', sourceIndex)
+            })
+            training.phraseTable.table.targetIndex(function(targetIndex) {
+              console.log('targetIndex: ', targetIndex)
+            })
+            aligning.align(corpus.slice(0,20),
               function(percent) {
                 if (percent != _this.state.aligningProgress) {
                   _this.setState({aligningProgress: percent})

@@ -1,23 +1,30 @@
-var correctionsTable = require('./src/correctionsTable.js');
-var phraseTable = require('./src/phraseTable.js');
+var CorrectionsTable = require('./src/correctionsTable.js')
+var PhraseTable = require('./src/phraseTable.js')
 
 
-var train = function(options, corpus, corrections, corpusProgress, correctionsProgress, correctionsCallback, corpusCallback, callback) {
-  console.log('training...');
-  console.time('training');
-  console.log('corrections...');
-  console.time('correctionsTable');
-  correctionsTable.generate(options, corrections, correctionsProgress, function() {
-    console.timeEnd('correctionsTable');
-    correctionsCallback();
-    console.log('corpus...');
-    console.time('corpusTable');
-    phraseTable.generate(options, corpus, corpusProgress, function() {
-      console.timeEnd('corpusTable');
-      corpusCallback();
-      console.timeEnd('training');
-      callback();
-    });
-  });
-};
-exports.train = train;
+function Training(options, corpus, corrections) {
+  this.phraseTable = new PhraseTable(options)
+  this.correctionsTable = new CorrectionsTable(options)
+
+  this.train = function(corpusProgress, correctionsProgress, correctionsCallback, corpusCallback, callback) {
+    console.log('training...')
+    console.time('training')
+    console.log('corrections...')
+    console.time('correctionsTable')
+    var _this = this
+    this.correctionsTable.generate(corrections, correctionsProgress, function() {
+      console.timeEnd('correctionsTable')
+      correctionsCallback()
+      console.log('corpus...')
+      console.time('corpusTable')
+      _this.phraseTable.generate(corpus, corpusProgress, function() {
+        console.timeEnd('corpusTable')
+        corpusCallback()
+        console.timeEnd('training')
+        callback()
+      })
+    })
+  }
+
+}
+exports = module.exports = Training

@@ -5,59 +5,47 @@ var async = require('async')
 var scoring = require('./scoring.js')
 var db = require('./db.js')
 
-var table = {
-  cache: {},
-  table: function(options, tableName) {
-    db.init()
-    return db.localforage.createInstance({"name": options.global.sourceLanguage+'-'+options.global.targetLanguage+'-'+tableName})
-  },
+function Table(tableName, options) {
 
-  cleanup: function(options, tableName, callback) {
-    var _this = this
-    this.table(options, tableName).setItem('phraseIndex', {}, function() {
-      _this.table(options, tableName).setItem('trainingSet', [], function() {
-        _this.table(options, tableName).clear(callback)
+  db.init()
+  var namespace = options.global.sourceLanguage+'-'+options.global.targetLanguage+'-'+tableName
+  var table = db.localforage.createInstance({"name": namespace})
+
+  this.cleanup = function(callback) {
+    table.setItem('phraseIndex', {}, function() {
+      table.setItem('trainingSet', [], function() {
+        table.clear(callback)
       })
     })
-  },
+  }
 
-  init: function(options, tableName, callback) {
-    var _this = this
-    this.cleanup(options, tableName, function(){
-      callback(_this.table(options, tableName))
-    })
-  },
-
-  getCount: function(options, tableName, callback) {
-    this.table(options, tableName).length(function(err,length) {
+  this.getCount = function(callback) {
+    table.length(function(err,length) {
       callback(length)
-    });
-  },
+    })
+  }
 
-  store: function(options, tableName, sourceIndex, targetIndex, trainingSet, progress, callback) {
-    this.cache[tableName+'-sourceIndex'] = sourceIndex
-    this.cache[tableName+'-targetIndex'] = targetIndex
-    this.cache[tableName+'-trainingSet'] = trainingSet
-    this.table(options, tableName).setItem('sourceIndex', sourceIndex, function() {
+  this.store = function(_sourceIndex, _targetIndex, _trainingSet, progress, callback) {
+    table.setItem('sourceIndex', _sourceIndex, function() {
       progress(0.5)
-      table.table(options, tableName).setItem('targetIndex', targetIndex, function() {
+      table.setItem('targetIndex', _targetIndex, function() {
         progress(0.75)
-        table.table(options, tableName).setItem('trainingSet', trainingSet, function() {
+        table.setItem('trainingSet', _trainingSet, function() {
           progress(1.0)
           callback()
         })
       })
     })
-  },
+  }
 
-  dynamicTrain: function(options, tableName, sourceIndex, targetIndex, trainingSet, alignmentPair, callback) {
+  var dynamicTrain = function(_sourceIndex, _targetIndex, _trainingSet, alignmentPair, callback) {
     var alignments = [] // response
     var isCorrection = (tableName == 'corrections')
     var sourceWords = tokenizer.tokenize(alignmentPair[0])
     var targetWords = tokenizer.tokenize(alignmentPair[1])
     var trainingIndices = {}
     sourceWords.forEach(function(sourceWord, i) {
-      var indices = sourceIndex[sourceWord]
+      var indices = _sourceIndex[sourceWord]
       if (indices !== undefined) {
         indices.forEach(function(indice) {
           trainingIndices[indice] = true
@@ -65,7 +53,7 @@ var table = {
       }
     })
     targetWords.forEach(function(targetWord, i) {
-      var indices = targetIndex[targetWord]
+      var indices = _targetIndex[targetWord]
       if (indices !== undefined) {
         indices.forEach(function(indice) {
           trainingIndices[indice] = true
@@ -74,19 +62,18 @@ var table = {
     })
     var trainingPairs = []
     Object.keys(trainingIndices).forEach(function(indice, i) {
-      var trainingPair = trainingSet[indice]
+      var trainingPair = _trainingSet[indice]
       trainingPairs.push(trainingPair)
     })
-    alignments = table.permutations(options, tableName, alignmentPair, trainingPairs)
-    callback(alignments)
-  },
+    trainingIndices = {}
+    permutations(alignmentPair, trainingPairs, callback)
+  }
 
-  permutations: function(options, tableName, alignmentPair, trainingPairs) {
+  var permutations = function(alignmentPair, trainingPairs, callback) {
     var alignments = [] // response
     var sourceAlignmentPhrases = ngram.ngram(alignmentPair[0], options.global.ngram.source)
     var targetAlignmentPhrases = ngram.ngram(alignmentPair[1], options.global.ngram.target)
-    // sourceAlignmentPhrases.push(' ')
-    targetAlignmentPhrases.push(' ')
+
     var sources = {}, targets = {}, permutations = {}
     trainingPairs.forEach(function(trainingPair, i) {
       var sourceTrainingPhrases, targetTrainingPhrases
@@ -96,24 +83,36 @@ var table = {
       } else {
         sourceTrainingPhrases = ngram.ngram(trainingPair[0], options.global.ngram.source)
         targetTrainingPhrases = ngram.ngram(trainingPair[1], options.global.ngram.target)
-        // sourceTrainingPhrases.push(' ')
+        sourceTrainingPhrases.push(' ')
         targetTrainingPhrases.push(' ')
       }
-
       var sourceIntersection = tools.intersect(sourceAlignmentPhrases, sourceTrainingPhrases)
       var targetIntersection = tools.intersect(targetAlignmentPhrases, targetTrainingPhrases)
-
-      // loop through the inverse to get target global/local totals
-      targetIntersection.forEach(function(targetPhrase) {
+      if (tableName !== 'corrections') {
+        sourceIntersection.push(' ')
+        targetIntersection.push(' ')
+        // seed sources and targets with tallies for ' '
+        sources[' '] = {global: trainingPairs.length, local: 1}
+        targets[' '] = {global: trainingPairs.length, local: 1}
+      }
+      // loop through the target training phrases to get target global/local totals
+      targetTrainingPhrases.forEach(function(targetPhrase) {
         if (targets[targetPhrase] === undefined) targets[targetPhrase] = {global: 0, local: 0}
-        targets[targetPhrase].global = targets[targetPhrase].global + sourceTrainingPhrases.length // tally up all source phrases for global totals
-        if (sourceIntersection.length > 0) targets[targetPhrase].local = targets[targetPhrase].local + sourceTrainingPhrases.length // if there is both source/target, tally up source phrases for local totals
+        if (targetPhrase !== ' ') {
+          targets[targetPhrase].global += sourceTrainingPhrases.length // tally up all source phrases for global totals
+        }
+        targets[targetPhrase].local += sourceIntersection.length // if there is both source/target, tally up source phrases for local totals
       })
-      // loop through source intersection and total up source global/local totals
-      sourceIntersection.forEach(function(sourcePhrase) {
+      // loop through source training phrases and total up source global/local totals
+      sourceTrainingPhrases.forEach(function(sourcePhrase) {
         if (sources[sourcePhrase] === undefined) sources[sourcePhrase] = {global: 0, local: 0}
-        sources[sourcePhrase].global = sources[sourcePhrase].global + targetTrainingPhrases.length // tally up all target phrases for global totals
-        if (targetIntersection.length > 0) sources[sourcePhrase].local = sources[sourcePhrase].local + targetTrainingPhrases.length // if there is both source/target, tally up target phrases for local totals
+        if (sourcePhrase !== ' ') {
+          sources[sourcePhrase].global += targetTrainingPhrases.length // tally up all target phrases for global totals
+        }
+        sources[sourcePhrase].local += targetIntersection.length // if there is both source/target, tally up target phrases for local totals
+      })
+      //
+      sourceIntersection.forEach(function(sourcePhrase) {
         // the intersection of the intersection is where to get the true tallies
         if (permutations[sourcePhrase] === undefined) permutations[sourcePhrase] = {}
         targetIntersection.forEach(function(targetPhrase) {
@@ -145,50 +144,38 @@ var table = {
         alignments.push(alignment)
       })
     })
-    return alignments
-  },
+    sources = {}
+    targets = {}
+    permutations = {}
+    callback(alignments)
+  }
 
-  sourceIndex: function(options, tableName, callback) {
-    var sourceIndex = table.cache[tableName+'-sourceIndex']
-    if (sourceIndex !== undefined) {
-      callback(sourceIndex)
-    } else {
-      table.table(options, tableName).getItem('sourceIndex', function(err, sourceIndex) {
-        table.cache[tableName+'-sourceIndex'] = sourceIndex
-        callback(sourceIndex)
-      })
-    }
-  },
+  var sourceIndex = function(callback) {
+    table.getItem('sourceIndex', function(err, _sourceIndex) {
+      callback(_sourceIndex)
+    })
+  }
+  this.sourceIndex = sourceIndex
 
-  targetIndex: function(options, tableName, callback) {
-    var targetIndex = table.cache[tableName+'-targetIndex']
-    if (targetIndex !== undefined) {
-      callback(targetIndex)
-    } else {
-      table.table(options, tableName).getItem('targetIndex', function(err, targetIndex) {
-        table.cache[tableName+'-targetIndex'] = targetIndex
-        callback(targetIndex)
-      })
-    }
-  },
+  var targetIndex = function(callback) {
+    table.getItem('targetIndex', function(err, _targetIndex) {
+      callback(_targetIndex)
+    })
+  }
+  this.targetIndex = targetIndex
 
-  trainingSet: function(options, tableName, callback) {
-    var trainingSet = table.cache[tableName+'-trainingSet']
-    if (trainingSet !== undefined) {
-      callback(trainingSet)
-    } else {
-      table.table(options, tableName).getItem('trainingSet', function(err, trainingSet) {
-        table.cache[tableName+'-trainingSet'] = trainingSet
-        callback(trainingSet)
-      })
-    }
-  },
+  var trainingSet = function(callback) {
+    table.getItem('trainingSet', function(err, _trainingSet) {
+      callback(_trainingSet)
+    })
+  }
+  this.trainingSet = trainingSet
 
-  phrases: function(options, tableName, alignmentPair, callback) {
-    table.sourceIndex(options, tableName, function(sourceIndex) {
-      table.targetIndex(options, tableName, function(targetIndex) {
-        table.trainingSet(options, tableName, function(trainingSet) {
-          table.dynamicTrain(options, tableName, sourceIndex, targetIndex, trainingSet, alignmentPair, function(alignments) {
+  this.phrases = function(alignmentPair, callback) {
+    sourceIndex(function(_sourceIndex) {
+      targetIndex(function(_targetIndex) {
+        trainingSet(function(_trainingSet) {
+          dynamicTrain(_sourceIndex, _targetIndex, _trainingSet, alignmentPair, function(alignments) {
             callback(alignments)
           })
         })
@@ -197,4 +184,4 @@ var table = {
   }
 }
 
-exports = module.exports = table
+exports = module.exports = Table

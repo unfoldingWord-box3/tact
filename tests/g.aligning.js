@@ -19,10 +19,12 @@ sources.forEach(function(string, index){ targets.push(reverse(string)) })
 var corpus = []
 sources.forEach(function(string, index){ corpus.push([string, targets[index]]) })
 
+var aligning = new tact.Aligning(options)
+
 describe('aligning.align', function() {
   it('should return alignments', function(done) {
     function progress(){}
-    tact.aligning.align(options, corpus, progress, function(alignments) {
+    aligning.align(corpus, progress, function(alignments) {
       assert.isArray(alignments)
       assert.equal(alignments.length, corpus.length)
       var firstPairAlignment = alignments[0]

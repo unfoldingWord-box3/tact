@@ -27,44 +27,48 @@ sources.forEach(function(string, index){ corrections.push([string, targets[index
 // pair to align
 var pairForAlignment = ["hello taco world", "dlrow ocat olleh"]
 
+var wordAligner = new tact.WordAligner(options)
+
 describe('wordAligner', function() {
   it('isNeeded() should update alignments', function(done) {
-    tact.phraseTable.generate(options, corpus, function(){}, function() {
-      tact.correctionsTable.generate(options, corrections, function(){}, function() {
-        tact.wordAligner.alignments(options, ['hello world', 'olleh dlrow'], function(alignments) {
-          tact.wordAligner.isNeeded(alignments[0], 'asdf', alignments[0].target)
+    wordAligner.phraseTable.generate(corpus, function(){}, function() {
+      wordAligner.correctionsTable.generate(corrections, function(){}, function() {
+        wordAligner.alignments(['hello world', 'olleh dlrow'], function(alignments) {
+          wordAligner.isNeeded(alignments[0], 'asdf', alignments[0].target)
           assert.isNotTrue(alignments[0].sourceNeeded)
           assert.isTrue(alignments[0].targetNeeded)
-          tact.wordAligner.isNeeded(alignments[2], alignments[1].source, 'fdsa')
-          assert.isTrue(alignments[2].sourceNeeded)
-          assert.isNotTrue(alignments[2].targetNeeded)
-          tact.wordAligner.isNeeded(alignments[2], 'asdf', 'fdsa')
-          assert.isNotTrue(alignments[2].sourceNeeded)
-          assert.isNotTrue(alignments[2].targetNeeded)
+          wordAligner.isNeeded(alignments[3], alignments[1].source, 'fdsa')
+          assert.isTrue(alignments[3].sourceNeeded)
+          assert.isNotTrue(alignments[3].targetNeeded)
+          wordAligner.isNeeded(alignments[4], 'asdf', 'fdsa')
+          assert.isNotTrue(alignments[4].sourceNeeded)
+          assert.isNotTrue(alignments[4].targetNeeded)
           done()
         })
       })
     })
   })
   it('isNeeded() should not update where target is " " alignments', function(done) {
-    tact.phraseTable.generate(options, corpus, function(){}, function() {
-      tact.correctionsTable.generate(options, corrections, function(){}, function() {
-        tact.wordAligner.alignments(options, ['hello world', 'olleh dlrow'], function(alignments) {
-          tact.wordAligner.isNeeded(alignments[1], alignments[1].source, 'fdsa')
-          assert.isTrue(alignments[1].sourceNeeded)
-          assert.isTrue(alignments[1].targetNeeded)
+    wordAligner.phraseTable.generate(corpus, function(){}, function() {
+      wordAligner.correctionsTable.generate(corrections, function(){}, function() {
+        wordAligner.alignments(['hello world', 'olleh dlrow'], function(alignments) {
+          assert.isTrue(alignments[2].sourceNeeded)
+          assert.isTrue(alignments[2].targetNeeded)
+          wordAligner.isNeeded(alignments[2], alignments[1].source, 'fdsa')
+          assert.isTrue(alignments[2].sourceNeeded)
+          assert.isTrue(alignments[2].targetNeeded)
           done()
         })
       })
     })
   })
   it('penalizeUnneeded() should update alignments', function(done) {
-    tact.phraseTable.generate(options, corpus, function(){}, function() {
-      tact.correctionsTable.generate(options, corrections, function(){}, function() {
-        tact.wordAligner.alignments(options, ['taco world', 'ocat dlrow'], function(alignments) {
-          var scoreBefore = alignments[1].score
-          tact.wordAligner.penalizeUnneeded(options, alignments, alignments[0].source, 'fdsa')
-          var scoreAfter = alignments[1].score
+    wordAligner.phraseTable.generate(corpus, function(){}, function() {
+      wordAligner.correctionsTable.generate(corrections, function(){}, function() {
+        wordAligner.alignments(['taco world', 'ocat dlrow'], function(alignments) {
+          var scoreBefore = alignments[4].score
+          wordAligner.penalizeUnneeded(alignments, alignments[0].source, 'fdsa')
+          var scoreAfter = alignments[4].score
           assert.isBelow(scoreAfter, scoreBefore)
           done()
         })
@@ -72,17 +76,17 @@ describe('wordAligner', function() {
     })
   })
   it('removeUnneededSources() should remove elements', function(done) {
-    tact.phraseTable.generate(options, corpus, function(){}, function() {
-      tact.correctionsTable.generate(options, corrections, function(){}, function() {
-        tact.wordAligner.alignments(options, ['hello world', 'olleh dlrow'], function(alignments) {
+    wordAligner.phraseTable.generate(corpus, function(){}, function() {
+      wordAligner.correctionsTable.generate(corrections, function(){}, function() {
+        wordAligner.alignments(['hello world', 'olleh dlrow'], function(alignments) {
           var count = alignments.length
           alignments[0].sourceNeeded = false
           alignments[count-1].sourceNeeded = false
-          tact.wordAligner.removeUnneededSources(alignments)
+          wordAligner.removeUnneededSources(alignments)
           var count1 = alignments.length
           assert.equal(count1, count - 2)
           alignments[0].sourceNeeded = false
-          tact.wordAligner.removeUnneededSources(alignments)
+          wordAligner.removeUnneededSources(alignments)
           var count2 = alignments.length
           assert.equal(count2, count - 3)
           done()
@@ -91,9 +95,9 @@ describe('wordAligner', function() {
     })
   })
   it('align() should return an array for each source word', function(done) {
-    tact.phraseTable.generate(options, corpus, function(){}, function() {
-      tact.correctionsTable.generate(options, corrections, function(){}, function() {
-        tact.wordAligner.align(options, pairForAlignment, function(alignment) {
+    wordAligner.phraseTable.generate(corpus, function(){}, function() {
+      wordAligner.correctionsTable.generate(corrections, function(){}, function() {
+        wordAligner.align(pairForAlignment, function(alignment) {
           var count = tact.tokenizer.tokenize(pairForAlignment[0]).length
           assert.equal(count, alignment.length)
           done()
@@ -102,7 +106,7 @@ describe('wordAligner', function() {
     })
   })
   it('align() should return an object of which values are an array of string and number.', function(done) {
-    tact.wordAligner.align(options, pairForAlignment, function(alignments) {
+    wordAligner.align(pairForAlignment, function(alignments) {
       var alignment = alignments[0]
       assert.isArray(alignment)
       var sourceNgram = alignment[0]
@@ -119,8 +123,8 @@ describe('wordAligner', function() {
     var correctionCorpus = [
       ["hello","olleh"]
     ]
-    tact.correctionsTable.generate(options, correctionCorpus, function(){}, function() {
-      tact.wordAligner.align(options, pairForAlignment, function(alignment) {
+    wordAligner.correctionsTable.generate(correctionCorpus, function(){}, function() {
+      wordAligner.align(pairForAlignment, function(alignment) {
         alignmentData = alignment
         var alignment = alignmentData[0]
         assert.isArray(alignment)
@@ -136,11 +140,11 @@ describe('wordAligner', function() {
   })
 
   it('align() should return empty array empty string is provided.', function(done) {
-    tact.wordAligner.align(options, ['',''], function(alignment) {
+    wordAligner.align(['',''], function(alignment) {
       assert.equal(alignment.length, 0)
-      tact.wordAligner.align(options, ['hello',''], function(alignment) {
+      wordAligner.align(['hello',''], function(alignment) {
         assert.equal(alignment.length, 0)
-        tact.wordAligner.align(options, ['','olleh'], function(alignment) {
+        wordAligner.align(['','olleh'], function(alignment) {
           assert.equal(alignment.length, 0)
           done()
         })

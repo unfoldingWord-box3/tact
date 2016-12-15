@@ -1,18 +1,20 @@
-var wordAligner = require('./wordAligner.js')
+var WordAligner = require('./wordAligner.js')
 
-var phraseAligner = {
+function PhraseAligner(options) {
+  var wordAligner = new WordAligner(options)
+  this.wordAligner = wordAligner
   // main alignment function that calls the other functions internally
-  align: function(options, sourcePhrase, alignmentPair, callback) {
+  this.align = function(sourcePhrase, alignmentPair, callback) {
     var targetString = alignmentPair[1]
     alignmentPair = [sourcePhrase, targetString]
     if (sourcePhrase == '' || targetString == '') {
       callback([])
     } else {
-      wordAligner.align(options, alignmentPair, function(alignments) {
+      wordAligner.align(alignmentPair, function(alignments) {
         callback(alignments)
       })
     }
   }
 }
 
-exports = module.exports = phraseAligner
+exports = module.exports = PhraseAligner

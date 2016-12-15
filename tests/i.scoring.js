@@ -11,15 +11,21 @@ function reverse(s) {
 describe('scoring', function() {
   it('ratioScore() should calculate ratios from tallies', function(done) {
     var alignment = {source: 'a', target: 'b', tally: 2, localSourceTotal: 3, globalSourceTotal: 9, localTargetTotal: 3, globalTargetTotal: 9}
-    var alignment = tact.scoring.ratioScore(alignment)
+    alignment = tact.scoring.ratioScore(alignment)
     assert.isAtLeast(alignment.localSourceRatio, 0)
     assert.isAtMost(alignment.localSourceRatio, 1)
     assert.isAtLeast(alignment.globalSourceRatio, 0)
     assert.isAtMost(alignment.globalSourceRatio, 1)
-    assert.isAtLeast(alignment.sourceUniqueness, 0)
-    assert.isAtMost(alignment.sourceUniqueness, 1)
     assert.isAtLeast(alignment.ratioScore, 0)
     assert.isAtMost(alignment.ratioScore, 1)
+    done()
+  })
+  it('uniquenessScore() should calculate ratios from tallies', function(done) {
+    var alignment = {source: 'a', target: 'b', tally: 2, localSourceTotal: 3, globalSourceTotal: 9, localTargetTotal: 3, globalTargetTotal: 9}
+    alignment = tact.scoring.ratioScore(alignment)
+    alignment = tact.scoring.uniquenessScore(alignment)
+    assert.isAtLeast(alignment.sourceUniqueness, 0)
+    assert.isAtMost(alignment.sourceUniqueness, 1)
     done()
   })
   it('ngramScore() should calculate score from ngrams', function(done) {

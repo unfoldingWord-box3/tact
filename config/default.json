@@ -24,6 +24,7 @@
         "sizeDelta": true,
         "penalties": true
       },
+      "concurrency": 1,
       "penalties": {
         "divide": 1,
         "subtract": 0.15
@@ -44,6 +45,7 @@
       },
       "weights": {
         "ratio": 10,
+        "uniqueness": 10,
         "ngram": 3,
         "phraseCount": 2,
         "wordOrder": 4,

@@ -28,11 +28,13 @@ sources.forEach(function(string, index){ corrections.push([string, targets[index
 var sourcePhrase = 'hello world'
 var alignmentPair = ['i say hello world', 'olleh dlrow yas i']
 
+var phraseAligner = new tact.PhraseAligner(options)
+
 describe('phraseAligner', function() {
   it('align() should return alignment pairs to cover all source phrase tokens', function(done) {
-    tact.phraseTable.generate(options, corpus, function(){}, function() {
-      tact.correctionsTable.generate(options, corrections, function(){}, function() {
-        tact.phraseAligner.align(options, sourcePhrase, alignmentPair, function(alignments) {
+    phraseAligner.wordAligner.phraseTable.generate(corpus, function(){}, function() {
+      phraseAligner.wordAligner.correctionsTable.generate(corrections, function(){}, function() {
+        phraseAligner.align(sourcePhrase, alignmentPair, function(alignments) {
           var alignedSource = []
           alignments.forEach(function(alignment) {
             alignedSource.push(alignment[0])
@@ -45,7 +47,7 @@ describe('phraseAligner', function() {
   })
 
   it('align() should return an object of which values are an array of string and number.', function(done) {
-    tact.phraseAligner.align(options, sourcePhrase, alignmentPair, function(alignments) {
+    phraseAligner.align(sourcePhrase, alignmentPair, function(alignments) {
       var alignment = alignments[0]
       assert.isArray(alignment)
       var sourceNgram = alignment[0]
@@ -62,8 +64,8 @@ describe('phraseAligner', function() {
     var correctionCorpus = [
       ["hello","olleh"]
     ]
-    tact.correctionsTable.generate(options, correctionCorpus, function(){}, function() {
-      tact.phraseAligner.align(options, sourcePhrase, alignmentPair, function(alignment) {
+    phraseAligner.wordAligner.correctionsTable.generate(correctionCorpus, function(){}, function() {
+      phraseAligner.align(sourcePhrase, alignmentPair, function(alignment) {
         alignmentData = alignment
         var alignment = alignmentData[0]
         assert.isArray(alignment)
@@ -79,11 +81,11 @@ describe('phraseAligner', function() {
   })
 
   it('align() should return empty array empty string is provided.', function(done) {
-    tact.phraseAligner.align(options, '', ['',''], function(alignment) {
+    phraseAligner.align('', ['',''], function(alignment) {
       assert.equal(alignment.length, 0)
-      tact.phraseAligner.align(options, 'hello', ['',''], function(alignment) {
+      phraseAligner.align('hello', ['',''], function(alignment) {
         assert.equal(alignment.length, 0)
-        tact.phraseAligner.align(options, '', ['','olleh'], function(alignment) {
+        phraseAligner.align('', ['','olleh'], function(alignment) {
           assert.equal(alignment.length, 0)
           done()
         })

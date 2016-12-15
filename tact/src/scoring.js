@@ -5,20 +5,27 @@ var tokenizer = require('./tokenizer.js')
 var scoring = {
   ratioScore: function(alignment) {
     alignment.localSourceRatio = alignment.tally / alignment.localSourceTotal
-    alignment.globalSourceRatio = Math.round(alignment.tally / alignment.globalSourceTotal * 1000) / 1000
-    alignment.sourceUniqueness = Math.round(alignment.localSourceTotal / alignment.globalSourceTotal * 1000) / 1000
     alignment.localTargetRatio = alignment.tally / alignment.localTargetTotal
+    alignment.localRatio = (alignment.localSourceRatio + alignment.localTargetRatio) / 2
+
+    alignment.globalSourceRatio = Math.round(alignment.tally / alignment.globalSourceTotal * 1000) / 1000
     alignment.globalTargetRatio = Math.round(alignment.tally / alignment.globalTargetTotal * 1000) / 1000
-    alignment.targetUniqueness = Math.round(alignment.localTargetTotal / alignment.globalTargetTotal * 1000) / 1000
+    alignment.globalRatio = (alignment.globalSourceRatio + alignment.globalTargetRatio) / 2
+
     alignment.ratioScore = (
-      3*alignment.globalSourceRatio +
-      3*alignment.globalTargetRatio +
-      2*alignment.localSourceRatio +
-      2*alignment.localTargetRatio +
-      1*(1-alignment.sourceUniqueness) +
-      1*(1-alignment.targetUniqueness)
-    )/12
-    if (Number.isNaN(alignment.ratioScore)) console.log(alignment)
+      2*alignment.localRatio +
+      3*alignment.globalRatio
+    )/5
+    if (Number.isNaN(alignment.ratioScore) || alignment.globalRatio === undefined) console.log(alignment)
+    return alignment
+  },
+
+  uniquenessScore: function(alignment) {
+    alignment.sourceUniqueness = Math.round(alignment.localSourceTotal / alignment.globalSourceTotal * 1000) / 1000
+    alignment.targetUniqueness = Math.round(alignment.localTargetTotal / alignment.globalTargetTotal * 1000) / 1000
+    var deltaUniqueness = Math.abs(alignment.sourceUniqueness - alignment.targetUniqueness)
+    alignment.uniqueness = 1.00 - deltaUniqueness // if the delta of uniqueness is great, make score lower, if the delta is small, make score higher
+    if (alignment.source == 'τὸν' && alignment.target == 'ram') console.log(alignment)
     return alignment
   },
   // favor phrases over words
@@ -28,6 +35,7 @@ var scoring = {
     var sourceNgramScore = options.align.ngrams.sourceScores[sourceNgramCount]
     var targetNgramScore = options.align.ngrams.targetScores[targetNgramCount]
     alignment.ngramScore = (sourceNgramScore + targetNgramScore) / 2
+    if (Number.isNaN(alignment.ngramScore)) console.log(alignment.target, targetNgramCount, targetNgramScore)
     if (alignment.correction) {
       var deltaNgramMax = Math.abs(options.global.ngram.target - sourceNgramCount)
       alignment.ngramScore = 1/(deltaNgramMax+1)
@@ -44,7 +52,8 @@ var scoring = {
   },
   // favor words/phrases that occur in the same place in the sentence
   wordOrderScore: function(sourcePhrase, targetPhrase, sourceString, targetString) {
-    if (targetPhrase == ' ') return 0.5
+    if (targetPhrase === ' ' || sourcePhrase === ' ') return 0.5
+    if (targetString === ' ' || sourceString === ' ') return 0.5
     var sourceIndices = tools.getIndicesOf(sourcePhrase, sourceString)
     var targetIndices = tools.getIndicesOf(targetPhrase, targetString)
     sourceIndices = [sourceIndices[0], sourceIndices[sourceIndices.length-1]]
@@ -85,6 +94,7 @@ var scoring = {
     var targetNgramArray = ngram.ngram(targetString, options.global.ngram.target)
     alignment.weightSum = tools.sum(options.align.weights)
     alignment = this.ratioScore(alignment)
+    alignment = this.uniquenessScore(alignment)
     alignment = this.ngramScore(options, alignment)
     var sourcePhrase = alignment.source, targetPhrase = alignment.target
 
@@ -106,6 +116,7 @@ var scoring = {
     }
     alignment.score = (
       options.align.weights.ratio * alignment.ratioScore +
+      options.align.weights.uniqueness * alignment.uniqueness +
       options.align.weights.ngram * (alignment.correction ? options.align.corrections.ngramMultiplier : 1) * alignment.ngramScore +
       options.align.weights.phraseCount * alignment.phraseCountScore +
       options.align.weights.wordOrder * alignment.wordOrderScore +
@@ -115,7 +126,7 @@ var scoring = {
       alignment.score = alignment.score + options.align.bonus.correction
     }
     alignment.score = Math.round(alignment.score * 1000) / 1000
-    // if (Number.isNaN(alignment.score)) {console.log(alignment)}
+    if (Number.isNaN(alignment.score)) {console.log(alignment)}
     return alignment
   }
 }
