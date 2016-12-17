@@ -7,7 +7,7 @@ var tact = {
   Table: require('./src/table.js'),
   PhraseTable: require('./src/phraseTable.js'),
   CorrectionsTable: require('./src/correctionsTable.js'),
-  Alignments: require('./src/Alignments.js'),
+  Alignments: require('./src/alignments.js'),
 
   Training: require('./training.js'),
   Aligning: require('./aligning.js')
