@@ -26,6 +26,7 @@ var targetIndex = {
 
 var table = new tact.Table(tableName, options)
 
+var _alignments
 describe('table', function() {
   it('table should start empty', function(done) {
     table.cleanup(function() {
@@ -46,6 +47,7 @@ describe('table', function() {
   it('phrases() should return tablealignments with totals in each alignment', function(done) {
     var sourceString = 'hello', targetString = 'olleh'
     table.phrases([sourceString, targetString], function(alignments) {
+      _alignments = alignments
       var alignment = alignments[0]
       assert.isAtLeast(alignment.source.length, 0)
       assert.equal(alignment.totals.tally, 1)
@@ -56,30 +58,30 @@ describe('table', function() {
       done()
     })
   })
-  // it('phrases() should return same totals a second time', function(done) {
-  //   var sourceString = 'hello', targetString = 'olleh'
-  //   table.phrases([sourceString, targetString], function(alignments) {
-  //     var alignment = alignments[0]
-  //     assert.equal(alignment.totals.tally, 1)
-  //     assert.equal(alignment.totals.localSource, 2)
-  //     assert.equal(alignment.totals.localTarget, 2)
-  //     assert.equal(alignment.totals.globalSource, 7)
-  //     assert.equal(alignment.totals.globalTarget, 6)
-  //     done()
-  //   })
-  // })
-  // it('phrases() should return same totals a third time', function(done) {
-  //   var sourceString = 'hello', targetString = 'olleh'
-  //   table.phrases([sourceString, targetString], function(alignments) {
-  //     var alignment = alignments[0]
-  //     assert.equal(alignment.totals.tally, 1)
-  //     assert.equal(alignment.totals.localSource, 2)
-  //     assert.equal(alignment.totals.localTarget, 2)
-  //     assert.equal(alignment.totals.globalSource, 7)
-  //     assert.equal(alignment.totals.globalTarget, 6)
-  //     done()
-  //   })
-  // })
+  it('phrases() should return same totals a second time', function(done) {
+    var sourceString = 'hello', targetString = 'olleh'
+    table.phrases([sourceString, targetString], function(alignments) {
+      var alignment = alignments[0]
+      assert.equal(alignment.totals.tally, 1)
+      assert.equal(alignment.totals.localSource, 2)
+      assert.equal(alignment.totals.localTarget, 2)
+      assert.equal(alignment.totals.globalSource, 7)
+      assert.equal(alignment.totals.globalTarget, 6)
+      done()
+    })
+  })
+  it('phrases() should return same totals a third time', function(done) {
+    var sourceString = 'hello', targetString = 'olleh'
+    table.phrases([sourceString, targetString], function(alignments) {
+      var alignment = alignments[0]
+      assert.equal(alignment.totals.tally, 1)
+      assert.equal(alignment.totals.localSource, 2)
+      assert.equal(alignment.totals.localTarget, 2)
+      assert.equal(alignment.totals.globalSource, 7)
+      assert.equal(alignment.totals.globalTarget, 6)
+      done()
+    })
+  })
   it('phrases() should return empty array when token not found', function(done) {
     var sourceString = 'asdf', targetString = 'fdsa'
     table.phrases([sourceString, targetString], function(alignments) {

@@ -138,7 +138,7 @@ Table.prototype.permutations = function(alignmentPair, trainingPairs, callback) 
         })
       }
     })
-    
+
     tools.forObject(permutations, function(source, _targets) {
       tools.forObject(_targets, function(target, alignment) {
         alignment.addLocalTotals(sources[source].local, targets[target].local)
