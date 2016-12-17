@@ -24,7 +24,7 @@
     "url": "git+https://github.com/unfoldingword-dev/8woc.git"
   },
   "keywords": [
-    "Translation",
+    "translation",
     "alignment",
     "correction",
     "statistics"
@@ -39,8 +39,7 @@
     "chai": "^3.5.0",
     "mocha": "^3.0.2",
     "nodemon": "^1.11.0",
-    "cli": "^1.0.1",
-    "babel-cli": "^6.18.0"
+    "cli": "^1.0.1"
   },
   "dependencies": {
     "cjson": "^0.4.0",
@@ -49,6 +48,7 @@
     "hjson": "^2.3.1",
     "iced-coffee-script": "^108.0.11",
     "js-yaml": "^3.7.0",
+    "babel-cli": "^6.18.0",
     "babel-plugin-system-import-transformer": "^2.4.0",
     "properties": "^1.2.1",
     "toml": "^2.3.0",
