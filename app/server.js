@@ -1,5 +1,6 @@
 'use strict';
 
+var compression = require('compression')
 var express = require('express');
 var http = require('http');
 
@@ -10,6 +11,7 @@ var server = http.createServer(app);
 
 /* Configuration */
 // app.set('views', __dirname + '/views');
+app.use(compression())
 app.use(express.static(__dirname + '/public'));
 app.set('port', (process.env.PORT || 3000));
 
