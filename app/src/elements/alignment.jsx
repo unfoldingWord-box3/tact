@@ -11,9 +11,9 @@ function Alignment(props) {
   const phrases = alignment.map((phrase, index) =>
     <td key={index}>
       <ListGroup className='phrase'>
-        <ListGroupItem>{phrase[0]}</ListGroupItem>
-        <ListGroupItem>{phrase[1]}</ListGroupItem>
-        <ListGroupItem className={className(phrase[2])}>{phrase[2]}</ListGroupItem>
+        <ListGroupItem>{phrase.source}</ListGroupItem>
+        <ListGroupItem>{phrase.target}</ListGroupItem>
+        <ListGroupItem className={className(phrase.confidence)}>{phrase.confidence}</ListGroupItem>
       </ListGroup>
     </td>
   );

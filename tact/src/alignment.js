@@ -93,7 +93,7 @@ Alignment.prototype.uniquenessScore = function() {
   that.uniqueness.target = Math.round(that.totals.localTarget / that.totals.globalTarget * 1000) / 1000
   var deltaUniqueness = Math.abs(that.uniqueness.source - that.uniqueness.target)
   that.scores.uniqueness = 1.00 - deltaUniqueness // if the delta of uniqueness is great, make score lower, if the delta is small, make score higher
-  if (that.source == 'τὸν' && that.target == 'ram') console.log(that)
+  // if (that.source == 'τὸν' && that.target == 'ram') console.log(that)
 }
 // favor phrases over words
 Alignment.prototype.ngramScore = function() {
@@ -112,7 +112,7 @@ Alignment.prototype.ngramScore = function() {
 // favor words/phrases that occur same number of times in source and target
 Alignment.prototype.phraseCountScore = function(sourceNgramArray, targetNgramArray) {
   var that = this
-  if (that.source === ' ' || that.target === ' ') return 0.5
+  if (that.source === ' ' || that.target === ' ') return 0.6
   var sourceMatchCount = tools.countInArray(sourceNgramArray, that.source)
   var targetMatchCount = tools.countInArray(targetNgramArray, that.target)
   var deltaCount = Math.abs(sourceMatchCount - targetMatchCount)
@@ -121,8 +121,8 @@ Alignment.prototype.phraseCountScore = function(sourceNgramArray, targetNgramArr
 // favor words/phrases that occur in the same place in the sentence
 Alignment.prototype.wordOrderScore = function(sourceString, targetString) {
   var that = this
-  if (that.source === ' ' || that.target === ' ') return 0.5
-  if (targetString === ' ' || sourceString === ' ') return 0.5
+  if (that.source === ' ' || that.target === ' ') return 0.6
+  if (targetString === ' ' || sourceString === ' ') return 0.6
   var sourceIndices = tools.getIndicesOf(that.source, sourceString)
   var targetIndices = tools.getIndicesOf(that.target, targetString)
   sourceIndices = [sourceIndices[0], sourceIndices[sourceIndices.length-1]]
@@ -142,7 +142,7 @@ Alignment.prototype.wordOrderScore = function(sourceString, targetString) {
 //favor words/ngrams around the same length relative to their language length
 Alignment.prototype.sizeDeltaScore = function(sourceString, targetString) {
   var that = this
-  if (that.target == ' ') return 0.5
+  if (that.target == ' ') return 0.6
   var sourceSizeRatio = that.source.length/sourceString.length
   var targetSizeRatio = that.target.length/targetString.length
   var deltaSizeRatio = Math.abs(sourceSizeRatio - targetSizeRatio)
