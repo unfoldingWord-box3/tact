@@ -4,8 +4,9 @@ var tokenizer = {
   tokens: {},
   nonUnicodeLetter: XRegExp('\\PL+?', 'g'), // var nonUnicodeLetter = XRegExp('[^\\pL]+');
   tokenize: function(string) {
+    if (typeof string !== 'string') throw 'tokenizer.tokenize(string) string is not String: ' + string
     var tokenArray = tokenizer.tokens[string]
-    if (tokenArray === undefined) {
+    if (tokenArray === undefined || tokenArray.length === 0) {
       tokenArray = [];
       var _tokens = string.split(tokenizer.nonUnicodeLetter)
       _tokens.forEach(function(token) {

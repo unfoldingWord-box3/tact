@@ -50,6 +50,12 @@ describe('correctionsTable', function() {
       done()
     })
   })
+  it('prune() should return empty array when tokens not found', function(done) {
+    correctionsTable.prune(['qwerty', 'ytrewq'], function(alignments) {
+      assert.equal(alignments.length, 0)
+      done()
+    })
+  })
   it('cleanup() should yield an table count of 0', function(done) {
     correctionsTable.table.cleanup(function() {
       correctionsTable.table.getCount(function(count) {

@@ -3,6 +3,7 @@ var tokenizer = require('./tokenizer.js')
 var ngram = {
   ngrams: {},
   ngram: function(string, n) {
+    if (typeof string !== 'string') throw 'ngram.ngram(string) string is not String: ' + string
     var key = n + string
     var ngramArray = this.ngrams[key]
     if (ngramArray === undefined) {

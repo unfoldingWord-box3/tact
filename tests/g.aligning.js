@@ -27,10 +27,6 @@ describe('aligning.align', function() {
     aligning.align(corpus, progress, function(alignments) {
       assert.isArray(alignments)
       assert.equal(alignments.length, corpus.length)
-      var firstPairAlignment = alignments[0]
-      assert.isArray(firstPairAlignment)
-      var firstWordAlignment = firstPairAlignment[0]
-      assert.isArray(firstWordAlignment)
       done()
     })
   })

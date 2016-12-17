@@ -1,4 +1,4 @@
-var WordAligner = require('./src/wordAligner.js')
+var Alignments = require('./src/alignments.js')
 var async = require('async')
 
 function Aligning(options) {
@@ -13,17 +13,17 @@ Aligning.prototype.align = function(alignmentPairs, progress, callback) {
   var that = this
   async.mapLimit(alignmentPairs, that.options.align.concurrency, // cpu is currently pegged with just one
     function(alignmentPair, _callback) {
-      var wordAligner = new WordAligner(that.options)
-      wordAligner.align(alignmentPair, function(alignment) {
+      var alignments = new Alignments(that.options, alignmentPair)
+      alignments.align(function(orderedAlignment) {
         completed++
         progress(completed/count)
-        _callback(null, alignment)
+        _callback(null, orderedAlignment)
       })
     },
-    function(err, alignments) {
+    function(err, orderedAlignment) {
       // console.log(JSON.stringify(alignments, null, 2))
       console.timeEnd('alignment')
-      callback(alignments)
+      callback(orderedAlignment)
     }
   )
 }

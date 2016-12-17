@@ -1,11 +1,11 @@
 var tools = require('./tools.js')
 var Table = require('./table.js')
-var scoring = require('./scoring.js')
 var tokenizer = require('./tokenizer.js')
 
 function CorrectionsTable(options) {
+  this.options = options
   var tableName = 'corrections'
-  this.table = new Table(tableName, options)
+  this.table = new Table(tableName, this.options)
   var sourceIndex = {}
   var targetIndex = {}
 

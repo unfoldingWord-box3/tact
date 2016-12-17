@@ -7,7 +7,7 @@ var tools = {
     b.sort()
     var intersection = []
     var ai=0, bi=0
-    do {
+    while ( ai < a.length && bi < b.length ) {
        if      (a[ai] < b[bi] ){ ai++ }
        else if (a[ai] > b[bi] ){ bi++ }
        else { /* they're equal */
@@ -15,11 +15,13 @@ var tools = {
          ai++
          bi++
        }
-    } while ( ai < a.length && bi < b.length )
+    }
     return intersection
   },
 
   getIndicesOf: function(phrase, string) {
+    if (typeof phrase !== 'string') throw 'tools.getIndicesOf(phrase) phrase is not String: ' + phrase
+    if (typeof string !== 'string') throw 'tools.getIndicesOf(string) string is not String: ' + string
     var phraseLength = phrase.length
     if (phraseLength == 0) return []
     var startIndex = 0, index, indices = []

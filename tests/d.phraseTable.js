@@ -5,10 +5,6 @@ var tact = require('./../tact/tact.js')
 var corpusFaker = require('./../tact/src/corpusFaker.js')
 var options = require('config').Client
 
-function reverse(s) {
-  return s.split('').reverse().join('')
-}
-
 var lexicon = corpusFaker.lexicon(100)
 var corpus = corpusFaker.lexiconCorpusGenerate(1000, lexicon)
 var pairForAlignment = corpusFaker.lexiconSentencePair(3, lexicon)
@@ -34,7 +30,7 @@ describe('phraseTable', function() {
   it('prune() with a long alignment pair should return lots of alignment options', function(done) {
     var alignmentPair = corpusFaker.lexiconSentencePair(20, lexicon)
     phraseTable.prune(alignmentPair, function(all) {
-      assert.isAtLeast(all.length, 10)
+      assert.isAtLeast(all.length, 8)
       done()
     })
   })
@@ -42,7 +38,7 @@ describe('phraseTable', function() {
     var alignmentPair = corpusFaker.lexiconSentencePair(50, lexicon)
     phraseTable.prune(alignmentPair, function(alignments) {
       alignments.forEach(function(alignment, index) {
-        assert.isNotNaN(alignment.score)
+        assert.isNotNaN(alignment.confidence)
       })
       done()
     })

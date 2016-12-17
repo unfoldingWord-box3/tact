@@ -5,8 +5,8 @@ function Training(options, corpus, corrections) {
   this.options = options
   this.corpus = corpus
   this.corrections = corrections
-  this.phraseTable = new PhraseTable(options)
-  this.correctionsTable = new CorrectionsTable(options)
+  this.phraseTable = new PhraseTable(this.options)
+  this.correctionsTable = new CorrectionsTable(this.options)
 }
 
 Training.prototype.train = function(corpusProgress, correctionsProgress, correctionsCallback, corpusCallback, callback) {
