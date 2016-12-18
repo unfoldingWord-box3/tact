@@ -151,7 +151,7 @@ Table.prototype.permutations = function(alignmentPair, trainingPairs, callback) 
     targets = {}
     permutations = {}
   }
-  callback(alignments)
+  callback(alignments.slice())
 }
 
 Table.prototype.sourceIndex = function(callback) {
@@ -178,7 +178,7 @@ Table.prototype.phrases = function(alignmentPair, callback) {
     that.targetIndex(function(_targetIndex) {
       that.trainingSet(function(_trainingSet) {
         that.dynamicTrain(_sourceIndex, _targetIndex, _trainingSet, alignmentPair, function(alignments) {
-          callback(alignments)
+          callback(alignments.slice())
         })
       })
     })

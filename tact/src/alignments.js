@@ -2,23 +2,9 @@ var tokenizer = require('./tokenizer')
 var PhraseTable = require('./phraseTable.js')
 var CorrectionsTable = require('./correctionsTable.js')
 
-function Alignments(options, alignmentPair, sourcePhrase) {
+function Alignments(options) {
   if (options.constructor !== Object) throw 'Alignments() options is not Object: ' + options
-  if (alignmentPair.constructor !== Array) throw 'Alignments() alignmentPair is not Array: ' + alignmentPair
-  if (typeof alignmentPair[0] !== 'string') throw 'Alignments() source is not String: ' + alignmentPair[0]
-  if (typeof alignmentPair[1] !== 'string') throw 'Alignments() target is not String: ' + alignmentPair[1]
-  if (sourcePhrase !== undefined && typeof sourcePhrase !== 'string') throw 'Alignments() sourcePhrase is not String: ' + sourcePhrase
   this.options = options
-
-  if (typeof sourcePhrase === 'string') {
-    this.alignmentPair = [sourcePhrase, alignmentPair[1]]
-  } else {
-    this.alignmentPair = alignmentPair
-  }
-  this.alignmentSource = alignmentPair[0]
-  this.alignmentTarget = alignmentPair[1]
-  this.alignmentSourceTokens = tokenizer.tokenize(this.alignmentSource)
-  this.alignmentTargetTokens = tokenizer.tokenize(this.alignmentTarget)
 
   this.phraseTable = new PhraseTable(this.options)
   this.correctionsTable = new CorrectionsTable(this.options)
@@ -29,28 +15,45 @@ function Alignments(options, alignmentPair, sourcePhrase) {
   this.orderedAlignment = []
 }
 // chain the callbacks for getting alignment
-Alignments.prototype.align = function(callback) {
+Alignments.prototype.align = function(alignmentPair, sourcePhrase, callback) {
+  this.validateArguments(alignmentPair, sourcePhrase)
   var that = this
   if (this.alignmentSourceTokens.length === 0 || this.alignmentTargetTokens.length === 0) {
-    callback(that.orderedAlignment)
+    callback(that.orderedAlignment.slice())
   } else {
-    this.getAlignments(function() {
+    this.getAlignments(alignmentPair, sourcePhrase, function() {
       that.selectBestAlignments()
       that.orderBySourceToken()
-      callback(that.orderedAlignment)
+      callback(that.orderedAlignment.slice())
     })
   }
 }
-
+// dedupe validation when multiple methods of usage
+Alignments.prototype.validateArguments = function(alignmentPair, sourcePhrase) {
+  if (alignmentPair.constructor !== Array) throw 'Alignments() alignmentPair is not Array: ' + alignmentPair
+  if (typeof alignmentPair[0] !== 'string') throw 'Alignments() source is not String: ' + alignmentPair[0]
+  if (typeof alignmentPair[1] !== 'string') throw 'Alignments() target is not String: ' + alignmentPair[1]
+  if (sourcePhrase !== undefined && sourcePhrase !== null && typeof sourcePhrase !== 'string') throw 'Alignments() sourcePhrase is not String: ' + sourcePhrase
+  if (typeof sourcePhrase === 'string' && tokenizer.tokenize(sourcePhrase).length > 1) {
+    this.alignmentPair = [sourcePhrase, alignmentPair[1]]
+  } else {
+    this.alignmentPair = alignmentPair.slice()
+  }
+  this.alignmentSource = alignmentPair[0]
+  this.alignmentTarget = alignmentPair[1]
+  this.alignmentSourceTokens = tokenizer.tokenize(this.alignmentSource)
+  this.alignmentTargetTokens = tokenizer.tokenize(this.alignmentTarget)
+}
 // get the alignments from phraseTable and correctionsTable
-Alignments.prototype.getAlignments = function(callback) {
+Alignments.prototype.getAlignments = function(alignmentPair, sourcePhrase, callback) {
+  this.validateArguments(alignmentPair, sourcePhrase)
   var that = this
   this.phraseTable.prune(this.alignmentPair, function(_phraseTable) {
     that.correctionsTable.prune(that.alignmentPair, function(_correctionsTable) {
       var alignments = _correctionsTable.concat(_phraseTable)
-      that.alignments = alignments
-      that.available = alignments
-      callback()
+      that.alignments = alignments.slice()
+      that.available = alignments.slice()
+      callback(alignments.slice())
     })
   })
 }
@@ -115,6 +118,7 @@ Alignments.prototype.orderBySourceToken = function() {
   var sourceTokens = this.alignmentSourceTokens
   // transform alignment into object to look up ngrams
   var that = this
+  that.orderedAlignment = []
   var unorderedAlignment = {}
   that.bestAlignments.forEach(function(alignment, index) {
     if (unorderedAlignment[alignment.source] === undefined || alignment.confidence > unorderedAlignment[alignment.source].confidence) {

@@ -13,8 +13,8 @@ Aligning.prototype.align = function(alignmentPairs, progress, callback) {
   var that = this
   async.mapLimit(alignmentPairs, that.options.align.concurrency, // cpu is currently pegged with just one
     function(alignmentPair, _callback) {
-      var alignments = new Alignments(that.options, alignmentPair)
-      alignments.align(function(orderedAlignment) {
+      var alignments = new Alignments(that.options)
+      alignments.align(alignmentPair, null, function(orderedAlignment) {
         completed++
         progress(completed/count)
         _callback(null, orderedAlignment)

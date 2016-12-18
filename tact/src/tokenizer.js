@@ -15,7 +15,7 @@ var tokenizer = {
       })
       tokenizer.tokens[string] = tokenArray
     }
-    return tokenArray
+    return tokenArray.slice()
   }
 }
 exports = module.exports = tokenizer
