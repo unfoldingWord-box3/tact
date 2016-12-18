@@ -4,53 +4,58 @@ var tokenizer = require('./tokenizer.js')
 
 function CorrectionsTable(options) {
   this.options = options
-  var tableName = 'corrections'
-  this.table = new Table(tableName, this.options)
-  var sourceIndex = {}
-  var targetIndex = {}
+  this.tableName = 'corrections'
+  this.table = new Table(this.tableName, this.options)
+  this.sourceIndex = {}
+  this.targetIndex = {}
+}
 
-  this.prune = function(alignmentPair, callback) {
-    this.table.phrases(alignmentPair, callback)
-  }
+CorrectionsTable.prototype.prune = function(alignmentPair, callback) {
+  this.table.phrases(alignmentPair, callback)
+}
 
-  var append = function(pair, index) {
-    var source = pair[0], target = pair[1]
-    var sourceWords = tokenizer.tokenize(source)
-    sourceWords.forEach(function(sourceWord, _index) {
-      if (sourceIndex[sourceWord] === undefined) {
-        sourceIndex[sourceWord] = []
-      }
-      sourceIndex[sourceWord].push(index)
-    })
-    var targetWords = tokenizer.tokenize(target)
-    targetWords.forEach(function(targetWord, _index) {
-      if (targetIndex[targetWord] === undefined) {
-        targetIndex[targetWord] = []
-      }
-      targetIndex[targetWord].push(index)
-    })
-  }
+CorrectionsTable.prototype.getBySource = function(sourcePhrase, callback) {
+  this.table.getBySource(sourcePhrase, callback)
+}
+
+CorrectionsTable.prototype.append = function(pair, index) {
+  var source = pair[0], target = pair[1]
+  var sourceWords = tokenizer.tokenize(source)
+  var that = this
+  sourceWords.forEach(function(sourceWord, _index) {
+    if (that.sourceIndex[sourceWord] === undefined) {
+      that.sourceIndex[sourceWord] = []
+    }
+    that.sourceIndex[sourceWord].push(index)
+  })
+  var targetWords = tokenizer.tokenize(target)
+  targetWords.forEach(function(targetWord, _index) {
+    if (that.targetIndex[targetWord] === undefined) {
+      that.targetIndex[targetWord] = []
+    }
+    that.targetIndex[targetWord].push(index)
+  })
+}
 
   // can pass in table so that it can incriment counts
-  this.generate = function(trainingSet, progress, callback) {
-    var _this = this
-    this.table.cleanup(function(){
-      // loop through trainingSet
-      // generate ngrams of source and target
-      var count = trainingSet.length
-      console.log("indexing phrases...")
-      trainingSet.forEach(function(pair, index) {
-        append(pair, index)
-      })
-      progress(0.25)
-      console.log("storing phraseIndex...")
-      _this.table.store(sourceIndex, targetIndex, trainingSet, progress, function() {
-        sourceIndex = {}
-        targetIndex = {}
-        callback()
-      })
+CorrectionsTable.prototype.generate = function(trainingSet, progress, callback) {
+  var that = this
+  this.table.cleanup(function(){
+    // loop through trainingSet
+    // generate ngrams of source and target
+    var count = trainingSet.length
+    console.log("indexing phrases...")
+    trainingSet.forEach(function(pair, index) {
+      that.append(pair, index)
     })
-  }
+    progress(0.25)
+    console.log("storing phraseIndex...")
+    that.table.store(that.sourceIndex, that.targetIndex, trainingSet, progress, function() {
+      that.sourceIndex = {}
+      that.targetIndex = {}
+      callback()
+    })
+  })
 }
 
 exports = module.exports = CorrectionsTable

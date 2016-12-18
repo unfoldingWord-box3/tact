@@ -14,6 +14,12 @@ function Alignments(options) {
   this.bestAlignments = []
   this.orderedAlignment = []
 }
+// get the list of consistency alignments
+Alignments.prototype.correctionsBySource = function(sourcePhrase, callback) {
+  if (sourcePhrase !== undefined && sourcePhrase !== null && typeof sourcePhrase !== 'string') throw 'Alignments() sourcePhrase is not String: ' + sourcePhrase
+  this.correctionsTable.getBySource(sourcePhrase, callback)
+}
+
 // chain the callbacks for getting alignment
 Alignments.prototype.align = function(alignmentPair, sourcePhrase, callback) {
   this.validateArguments(alignmentPair, sourcePhrase)

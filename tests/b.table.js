@@ -1,6 +1,7 @@
 var chai = require('chai')
 var assert = chai.assert
 var tact = require('./../tact/tact.js')
+var ngram = require('./../tact/src/ngram.js')
 var options = require('config').Client
 
 var tableName = 'test'
@@ -44,10 +45,18 @@ describe('table', function() {
       })
     })
   })
+  it('getBySource() should return alignments for all targets', function(done) {
+    var sourcePhrase = 'hello'
+    table.getBySource(sourcePhrase, function(alignments) {
+      var count = ngram.ngram(trainingSet[0][1], options.global.ngram.target).length + 1
+      count = count * 2 // handle injection of ' ' source
+      assert.equal(alignments.length, count)
+      done()
+    })
+  })
   it('phrases() should return tablealignments with totals in each alignment', function(done) {
     var sourceString = 'hello', targetString = 'olleh'
     table.phrases([sourceString, targetString], function(alignments) {
-      _alignments = alignments
       var alignment = alignments[0]
       assert.isAtLeast(alignment.source.length, 0)
       assert.equal(alignment.totals.tally, 1)

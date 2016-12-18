@@ -158,6 +158,14 @@ describe('Alignments', function() {
       })
     })
   })
+  it('correctionsBySource() should return alignments for all sub phrase corrections', function(done) {
+    var sourcePhrase = 'hello world'
+    var alignments = new tact.Alignments(options)
+    alignments.correctionsBySource(sourcePhrase, function(alignments) {
+      assert.equal(alignments.length, 1)
+      done()
+    })
+  })
   it('align() should return empty array empty string is provided.', function(done) {
     var alignments = new tact.Alignments(options)
     alignments.align([' ', ' '], null, function(orderedAlignment) {
