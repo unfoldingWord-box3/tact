@@ -5,55 +5,55 @@ var tokenizer = require('./tokenizer.js')
 
 function PhraseTable(options) {
   this.options = options
-  var tableName = 'phrases'
-  this.table = new Table(tableName, this.options)
-  var sourceIndex = {}
-  var targetIndex = {}
+  this.tableName = 'phrases'
+  this.table = new Table(this.tableName, this.options)
+  this.sourceIndex = {}
+  this.targetIndex = {}
+}
 
-  this.prune = function(alignmentPair, callback) {
-    this.table.phrases(alignmentPair, callback)
-  }
+PhraseTable.prototype.prune = function(alignmentPair, callback) {
+  this.table.phrases(alignmentPair, callback)
+}
 
-  var append = function(pair, index) {
-    var source = pair[0], target = pair[1]
-    var sourceWords = tokenizer.tokenize(source)
-    // sourceWords.push(' ')
-    sourceWords.forEach(function(sourceWord, _index) {
-      if (sourceIndex[sourceWord] === undefined) {
-        sourceIndex[sourceWord] = []
-      }
-      sourceIndex[sourceWord].push(index)
+PhraseTable.prototype.append = function(pair, index) {
+  var source = pair[0], target = pair[1]
+  var sourceWords = tokenizer.tokenize(source)
+  var that = this
+  // sourceWords.push(' ')
+  sourceWords.forEach(function(sourceWord, _index) {
+    if (that.sourceIndex[sourceWord] === undefined) {
+      that.sourceIndex[sourceWord] = []
+    }
+    that.sourceIndex[sourceWord].push(index)
+  })
+  var targetWords = tokenizer.tokenize(target)
+  // targetWords.push(' ')
+  targetWords.forEach(function(targetWord, _index) {
+    if (that.targetIndex[targetWord] === undefined) {
+      that.targetIndex[targetWord] = []
+    }
+    that.targetIndex[targetWord].push(index)
+  })
+}
+// can pass in table so that it can incriment counts
+PhraseTable.prototype.generate = function(trainingSet, progress, callback) {
+  var that = this
+  this.table.cleanup(function(){
+    that.sourceIndex = {}
+    that.targetIndex = {}
+    // loop through trainingSet
+    console.log("indexing phrases...")
+    trainingSet.forEach(function(pair, index) {
+      that.append(pair, index)
     })
-    var targetWords = tokenizer.tokenize(target)
-    // targetWords.push(' ')
-    targetWords.forEach(function(targetWord, _index) {
-      if (targetIndex[targetWord] === undefined) {
-        targetIndex[targetWord] = []
-      }
-      targetIndex[targetWord].push(index)
+    progress(0.25)
+    console.log("storing phraseIndex...")
+    that.table.store(that.sourceIndex, that.targetIndex, trainingSet, progress, function() {
+      that.sourceIndex = {}
+      that.targetIndex = {}
+      callback()
     })
-  }
-
-  // can pass in table so that it can incriment counts
-  this.generate = function(trainingSet, progress, callback) {
-    var _this = this
-    this.table.cleanup(function(){
-      sourceIndex = {}
-      targetIndex = {}
-      // loop through trainingSet
-      console.log("indexing phrases...")
-      trainingSet.forEach(function(pair, index) {
-        append(pair, index)
-      })
-      progress(0.25)
-      console.log("storing phraseIndex...")
-      _this.table.store(sourceIndex, targetIndex, trainingSet, progress, function() {
-        sourceIndex = {}
-        targetIndex = {}
-        callback()
-      })
-    })
-  }
+  })
 }
 
 exports = module.exports = PhraseTable
