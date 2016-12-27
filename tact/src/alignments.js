@@ -16,10 +16,14 @@ function Alignments(options) {
 }
 // get the list of consistency alignments
 Alignments.prototype.correctionsBySource = function(sourcePhrase, callback) {
-  if (sourcePhrase !== undefined && sourcePhrase !== null && typeof sourcePhrase !== 'string') throw 'Alignments() sourcePhrase is not String: ' + sourcePhrase
+  if (sourcePhrase !== undefined && sourcePhrase !== null && typeof sourcePhrase !== 'string') throw 'Alignments.correctionsBySource() sourcePhrase is not String: ' + sourcePhrase
   this.correctionsTable.getBySource(sourcePhrase, callback)
 }
-
+// get the list of consistency alignments
+Alignments.prototype.phrasesBySource = function(source, callback) {
+  if (source !== undefined && source !== null && typeof source !== 'string') throw 'Alignments.phrasesBySource() source is not String: ' + source
+  this.phraseTable.getBySource(source, callback)
+}
 // chain the callbacks for getting alignment
 Alignments.prototype.align = function(alignmentPair, sourcePhrase, callback) {
   this.validateArguments(alignmentPair, sourcePhrase)

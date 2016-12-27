@@ -35,21 +35,19 @@
       "corrections": {
         "ngramMultiplier": 10
       },
-      "ngrams": {
-        "sourceScores": [0, 1.0, 0.8, 0.6],
-        "targetScores": [0, 0.9, 1.0, 0.8, 0.7]
-      },
       "staticScoreRatios": {
         "phraseCount": 0.5,
-        "wordOrder": 0.5
+        "wordOrder": 0.5,
+        "sizeDelta": 0.5,
+        "ngram": 0.5
       },
       "weights": {
         "ratio": 10,
         "uniqueness": 10,
-        "ngram": 3,
         "phraseCount": 2,
         "wordOrder": 4,
-        "sizeDelta": 5
+        "sizeDelta": 2,
+        "ngram": 2
       }
     }
   }

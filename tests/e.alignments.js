@@ -1,4 +1,3 @@
-// tests/aligner.js
 var chai = require('chai')
 var assert = chai.assert
 var tact = require('./../tact/tact.js')
@@ -163,6 +162,14 @@ describe('Alignments', function() {
     var alignments = new tact.Alignments(options)
     alignments.correctionsBySource(sourcePhrase, function(alignments) {
       assert.equal(alignments.length, 1)
+      done()
+    })
+  })
+  it('phrasesBySource() should return alignments for all sub phrase corrections', function(done) {
+    var source = 'hello world'
+    var alignments = new tact.Alignments(options)
+    alignments.phrasesBySource(source, function(alignments) {
+      assert.isAtLeast(alignments.length, 100)
       done()
     })
   })

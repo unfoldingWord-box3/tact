@@ -2,7 +2,7 @@ var tools = require('./tools.js')
 var ngram = require('./ngram.js')
 var tokenizer = require('./tokenizer.js')
 
-function Alignment(options, source, target, isCorrection) {
+function Alignment(options, source, target, isCorrection, isAlignment) {
   if (options.constructor !== Object) throw 'Alignment() options is not Object: ' + options
   if (typeof source !== 'string') throw 'Alignment(source) source is not String: ' + source
   if (typeof target !== 'string') throw 'Alignment(target) target is not String: ' + target
@@ -10,6 +10,7 @@ function Alignment(options, source, target, isCorrection) {
   this.target = target
   this.options = options
   this.isCorrection = isCorrection
+  this.isAlignment = isAlignment
 
   this.sourceNeeded = true
   this.targetNeeded = true
@@ -51,6 +52,10 @@ function Alignment(options, source, target, isCorrection) {
 
   this.staticScores = []
 }
+
+////// IF WORD IS ONLY IN A CORRECTION THAT IS A LONGER PHRASE, FIND THE PATTERN AND MIMIC.
+
+////// IF A PHRASE IS NOT USED MORE THAN ONCE IT IS NOT A PHRASE, IT'S JUST AN NGRAM
 
 Alignment.prototype.addTally = function(tally) {
   this.totals.tally += tally
@@ -96,22 +101,34 @@ Alignment.prototype.uniquenessScore = function() {
   // if (that.source == 'τὸν' && that.target == 'ram') console.log(that)
 }
 // favor phrases over words
-Alignment.prototype.ngramScore = function() {
-  var that = this
-  var sourceNgramCount = tokenizer.tokenize(that.source).length
-  var targetNgramCount = tokenizer.tokenize(that.target).length
-  var sourceNgramScore = that.options.align.ngrams.sourceScores[sourceNgramCount]
-  var targetNgramScore = that.options.align.ngrams.targetScores[targetNgramCount]
-  if (that.isCorrection) {
-    var deltaNgramMax = Math.abs(that.options.global.ngram.target - sourceNgramCount)
-    that.scores.ngram = 1/(deltaNgramMax+1)
+Alignment.prototype.ngramScore = function(alignmentPair) {
+  var ngramScore // response
+  var sourceNgramCount = tokenizer.tokenize(this.source).length
+  var targetNgramCount = tokenizer.tokenize(this.target).length
+  if (sourceNgramCount === 0 || targetNgramCount === 0) {
+    ngramScore = 0
   } else {
-    that.scores.ngram = (sourceNgramScore + targetNgramScore) / 2
+    if (this.isCorrection) {
+      var deltaNgramMax = Math.abs(this.options.global.ngram.source - sourceNgramCount)
+      ngramScore = 1/(deltaNgramMax+1)
+    } else {
+      if (alignmentPair[1] === undefined) alignmentPair[1] = ''
+      var sourceStringNgramCount = tokenizer.tokenize(alignmentPair[0]).length
+      var targetStringNgramCount = tokenizer.tokenize(alignmentPair[1]).length
+      var sourceNgramRatio = sourceNgramCount / sourceStringNgramCount
+      var targetNgramRatio = targetNgramCount / targetStringNgramCount
+      var deltaNgramRatio =  Math.abs(sourceNgramRatio - targetNgramRatio)
+      ngramScore = Math.pow( (1.00 - deltaNgramRatio), 5 )
+    }
   }
+  return ngramScore
 }
 // favor words/phrases that occur same number of times in source and target
-Alignment.prototype.phraseCountScore = function(sourceNgramArray, targetNgramArray) {
+Alignment.prototype.phraseCountScore = function(alignmentPair) {
   var that = this
+  var sourceString = alignmentPair[0], targetString = alignmentPair[1]
+  var sourceNgramArray = ngram.ngram(sourceString, that.options.global.ngram.source)
+  var targetNgramArray = ngram.ngram(targetString, that.options.global.ngram.target)
   if (that.source === ' ' || that.target === ' ') return 0.6
   var sourceMatchCount = tools.countInArray(sourceNgramArray, that.source)
   var targetMatchCount = tools.countInArray(targetNgramArray, that.target)
@@ -119,8 +136,9 @@ Alignment.prototype.phraseCountScore = function(sourceNgramArray, targetNgramArr
   return 1/(deltaCount+1)
 }
 // favor words/phrases that occur in the same place in the sentence
-Alignment.prototype.wordOrderScore = function(sourceString, targetString) {
+Alignment.prototype.wordOrderScore = function(alignmentPair) {
   var that = this
+  var sourceString = alignmentPair[0], targetString = alignmentPair[1]
   if (that.source === ' ' || that.target === ' ') return 0.6
   if (targetString === ' ' || sourceString === ' ') return 0.6
   var sourceIndices = tools.getIndicesOf(that.source, sourceString)
@@ -140,49 +158,60 @@ Alignment.prototype.wordOrderScore = function(sourceString, targetString) {
   return (1 - deltaRatioAvg)
 }
 //favor words/ngrams around the same length relative to their language length
-Alignment.prototype.sizeDeltaScore = function(sourceString, targetString) {
+Alignment.prototype.sizeDeltaScore = function(alignmentPair) {
   var that = this
   if (that.target == ' ') return 0.6
-  var sourceSizeRatio = that.source.length/sourceString.length
-  var targetSizeRatio = that.target.length/targetString.length
+  var sourceSizeRatio = that.source.length/alignmentPair[0].length
+  var targetSizeRatio = that.target.length/alignmentPair[1].length
   var deltaSizeRatio = Math.abs(sourceSizeRatio - targetSizeRatio)
-  return (1 - deltaSizeRatio)
+  return Math.pow( (1 - deltaSizeRatio), 5 )
 }
 // score based on factors that don't change once new corpus is added, used during training
-Alignment.prototype.addStaticScore = function(sourceSegment, targetSegment) {
+Alignment.prototype.addStaticScore = function(trainingPair) {
   var that = this
-  var sourceNgramArray = ngram.ngram(sourceSegment, that.options.global.ngram.source)
-  var targetNgramArray = ngram.ngram(targetSegment, that.options.global.ngram.target)
   var staticScore = {
-    phraseCount: that.phraseCountScore(sourceNgramArray, targetNgramArray),
-    wordOrder: that.wordOrderScore(sourceSegment, targetSegment)
+    phraseCount: that.phraseCountScore(trainingPair),
+    wordOrder: that.wordOrderScore(trainingPair),
+    sizeDelta: that.sizeDeltaScore(trainingPair),
+    ngram: that.ngramScore(trainingPair)
   }
-  that.staticScores.push(staticScore)
+  this.staticScores.push(staticScore)
+}
+// calculate the static scores
+Alignment.prototype.getStaticScore = function(alignmentPair) {
+  if (this.isAlignment) {
+    if (this.staticScores.length > 0) {
+      var _phraseCountScore = this.phraseCountScore(alignmentPair)
+      var _wordOrderScore = this.wordOrderScore(alignmentPair)
+      var _sizeDeltaScore = this.sizeDeltaScore(alignmentPair)
+      var _ngramScore = this.ngramScore(alignmentPair)
+      var ratios = this.options.align.staticScoreRatios
+      var averageStaticScores = this.averageStaticScores()
+      this.scores.phraseCount = averageStaticScores.phraseCount * ratios.phraseCount + _phraseCountScore * (1-ratios.phraseCount)
+      this.scores.wordOrder = averageStaticScores.wordOrder * ratios.wordOrder + _wordOrderScore * (1-ratios.wordOrder)
+      this.scores.sizeDelta = averageStaticScores.sizeDelta * ratios.sizeDelta + _sizeDeltaScore * (1-ratios.sizeDelta)
+      this.scores.ngram = averageStaticScores.ngram * ratios.ngram + _ngramScore * (1-ratios.ngram)
+    } else {
+      this.scores.phraseCount = this.phraseCountScore(alignmentPair)
+      this.scores.wordOrder = this.wordOrderScore(alignmentPair)
+      this.scores.sizeDelta = this.sizeDeltaScore(alignmentPair)
+      this.scores.ngram = this.ngramScore(alignmentPair)
+    }
+  } else {
+    var averageStaticScores = this.averageStaticScores()
+    this.scores.phraseCount = averageStaticScores.phraseCount
+    this.scores.wordOrder = averageStaticScores.wordOrder
+    this.scores.sizeDelta = averageStaticScores.sizeDelta
+    this.scores.ngram = averageStaticScores.ngram
+  }
 }
 // score the alignment based on the criteria such as ngram length
 Alignment.prototype.score = function(alignmentPair) {
   var that = this
-  var sourceString = alignmentPair[0], targetString = alignmentPair[1]
-  var sourceNgramArray = ngram.ngram(sourceString, that.options.global.ngram.source)
-  var targetNgramArray = ngram.ngram(targetString, that.options.global.ngram.target)
   that.weightSum = tools.sum(that.options.align.weights)
   that.ratioScore()
   that.uniquenessScore()
-  that.ngramScore()
-
-
-  if (that.options.global.features.staticScores && that.staticScores.length > 0) {
-    var _phraseCountScore = that.phraseCountScore(sourceNgramArray, targetNgramArray)
-    var _wordOrderScore = that.wordOrderScore(sourceString, targetString)
-    var ratios = that.options.align.staticScoreRatios
-    that.scores.phraseCount = that.averageStaticScores().phraseCount * ratios.phraseCount + _phraseCountScore * (1-ratios.phraseCount)
-    that.scores.wordOrder = that.averageStaticScores().wordOrder * ratios.wordOrder + _wordOrderScore * (1-ratios.wordOrder)
-  } else {
-    that.scores.phraseCount = that.phraseCountScore(sourceNgramArray, targetNgramArray)
-    that.scores.wordOrder = that.wordOrderScore(sourceString, targetString)
-  }
-
-  that.scores.sizeDelta = that.sizeDeltaScore(sourceString, targetString)
+  that.getStaticScore(alignmentPair)
 
   if (that.isCorrection) {
     that.weightSum = that.weightSum + that.options.align.weights.ngram * (that.options.align.corrections.ngramMultiplier - 1)
@@ -199,7 +228,7 @@ Alignment.prototype.score = function(alignmentPair) {
     that.confidence = that.confidence + that.options.align.bonus.correction
   }
   that.confidence = Math.round(that.confidence * 1000) / 1000
-  if (Number.isNaN(that.confidence) || that.confidence === 0) {console.log(that)}
+  if (Number.isNaN(that.confidence) || that.confidence === 0) {console.log(alignmentPair, that)}
 }
 // instead of previous approach of conflicts, look to see what is needed
 Alignment.prototype.isNeeded = function(sourceNeededString, targetNeededString) {

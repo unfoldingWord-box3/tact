@@ -27,8 +27,8 @@ Table.prototype.phrases = function(alignmentPair, callback) {
   })
 }
 
-Table.prototype.getBySource = function(sourcePhrase, callback) {
-  var alignmentPair = [sourcePhrase, undefined]
+Table.prototype.getBySource = function(source, callback) {
+  var alignmentPair = [source, undefined]
   var that = this
   that.sourceIndex(function(_sourceIndex) {
     that.targetIndex(function(_targetIndex) {
@@ -102,11 +102,6 @@ Table.prototype.permutations = function(alignmentPair, trainingPairs, callback) 
   var alignments = [] // response
   if (trainingPairs.length > 0) {
     var that = this
-    var sourceAlignmentPhrases = ngram.ngram(alignmentPair[0], that.options.global.ngram.source)
-    var targetAlignmentPhrases
-    if (alignmentPair[1] !== undefined) {
-      targetAlignmentPhrases = ngram.ngram(alignmentPair[1], that.options.global.ngram.target)
-   }
 
     var sources = {}, targets = {}, permutations = {}
     trainingPairs.forEach(function(trainingPair, i) {
@@ -120,12 +115,18 @@ Table.prototype.permutations = function(alignmentPair, trainingPairs, callback) 
         sourceTrainingPhrases.push(' ')
         targetTrainingPhrases.push(' ')
       }
-      var sourceIntersection = tools.intersect(sourceAlignmentPhrases, sourceTrainingPhrases)
+
+      var sourceAlignmentPhrases = ngram.ngram(alignmentPair[0], that.options.global.ngram.source)
+      var targetAlignmentPhrases
       if (alignmentPair[1] !== undefined) {
-        var targetIntersection = tools.intersect(targetAlignmentPhrases, targetTrainingPhrases)
+        targetAlignmentPhrases = ngram.ngram(alignmentPair[1], that.options.global.ngram.target)
       } else {
-        targetIntersection = targetTrainingPhrases
+        targetAlignmentPhrases = targetTrainingPhrases
       }
+
+      var sourceIntersection = tools.intersect(sourceAlignmentPhrases, sourceTrainingPhrases)
+      var targetIntersection = tools.intersect(targetAlignmentPhrases, targetTrainingPhrases)
+
       if (sourceIntersection.length > 0 || targetIntersection.length > 0) {
         if (!that.isCorrections) {
           sourceIntersection.push(' ')
@@ -156,10 +157,11 @@ Table.prototype.permutations = function(alignmentPair, trainingPairs, callback) 
           if (permutations[sourcePhrase] === undefined) permutations[sourcePhrase] = {}
           targetIntersection.forEach(function(targetPhrase) {
             // this next object is the basis of an alignment object
-            var alignment = new Alignment(that.options, sourcePhrase, targetPhrase, that.isCorrections)
+            var isAlignment = alignmentPair[1] !== undefined
+            var alignment = new Alignment(that.options, sourcePhrase, targetPhrase, that.isCorrections, isAlignment)
             alignment.addTally(1)
             // go ahead and do static scoring while inside
-            alignment.addStaticScore(trainingPair[0], trainingPair[1])
+            alignment.addStaticScore(trainingPair)
             permutations[sourcePhrase][targetPhrase] = alignment
           })
         })
@@ -170,9 +172,7 @@ Table.prototype.permutations = function(alignmentPair, trainingPairs, callback) 
       tools.forObject(_targets, function(target, alignment) {
         alignment.addLocalTotals(sources[source].local, targets[target].local)
         alignment.addGlobalTotals(sources[source].global, targets[target].global)
-        if (alignmentPair[1] !== undefined) {
-          alignment.score(alignmentPair)
-        }
+        alignment.score(alignmentPair)
         alignments.push(alignment)
       })
     })

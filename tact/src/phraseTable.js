@@ -15,6 +15,10 @@ PhraseTable.prototype.prune = function(alignmentPair, callback) {
   this.table.phrases(alignmentPair, callback)
 }
 
+PhraseTable.prototype.getBySource = function(source, callback) {
+  this.table.getBySource(source, callback)
+}
+
 PhraseTable.prototype.append = function(pair, index) {
   var source = pair[0], target = pair[1]
   var sourceWords = tokenizer.tokenize(source)

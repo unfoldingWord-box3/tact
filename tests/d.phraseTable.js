@@ -20,6 +20,20 @@ describe('phraseTable', function() {
       })
     })
   })
+  it('getBySource() should return a lot of alignments for sourcePhrase', function(done) {
+    var sourcePhrase = lexicon[Object.keys(lexicon)[0]][0]
+    phraseTable.getBySource(sourcePhrase, function(alignments) {
+      assert.isAtLeast(alignments.length, 100)
+      done()
+    })
+  })
+  it('getBySource() should return a lot of alignments for all sub phrases', function(done) {
+    var sourcePhrase = corpus[0][0]
+    phraseTable.getBySource(sourcePhrase, function(alignments) {
+      assert.isAtLeast(alignments.length, 100)
+      done()
+    })
+  })
   it('prune() with one word pair should return 4 rows including possible blanks', function(done) {
     var alignmentPair = corpus[0]
     phraseTable.prune([alignmentPair[0].split(' ')[0], alignmentPair[1].split(' ')[1]], function(all) {
