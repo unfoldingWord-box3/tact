@@ -2,6 +2,15 @@ var tokenizer = require('./tokenizer.js')
 
 var tools = {
 
+  closestWord: function(word, array) {
+    array.sort()
+    function isEqualToOrNext(element) {
+      return element.toLowerCase() >= word.toLowerCase()
+    }
+    var _word = array.find(isEqualToOrNext)
+    return _word
+  },
+
   intersect: function(a, b) {
     a.sort()
     b.sort()
