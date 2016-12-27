@@ -54,7 +54,6 @@ function Alignment(options, source, target, isCorrection, isAlignment) {
 }
 
 ////// IF WORD IS ONLY IN A CORRECTION THAT IS A LONGER PHRASE, FIND THE PATTERN AND MIMIC.
-
 ////// IF A PHRASE IS NOT USED MORE THAN ONCE IT IS NOT A PHRASE, IT'S JUST AN NGRAM
 
 Alignment.prototype.addTally = function(tally) {
