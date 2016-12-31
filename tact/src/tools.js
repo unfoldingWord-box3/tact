@@ -6,7 +6,7 @@ var tools = {
     var regex = new RegExp('(^|\\s)('+substring+')(?=\\s|$)', 'g')
     // console.log(regex, string)
     var matches = []
-    let m
+    var m
     while ((m = regex.exec(string)) !== null) {
       // console.log(m)
       // This is necessary to avoid infinite loops with zero-width matches
