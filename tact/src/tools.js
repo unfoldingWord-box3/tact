@@ -2,6 +2,26 @@ var tokenizer = require('./tokenizer.js')
 
 var tools = {
 
+  match: function(substring, string) {
+    var regex = new RegExp(`(^|\\s)(${substring})(?=\\s|$)`, 'g')
+    // console.log(regex, string)
+    var matches = []
+    let m
+    while ((m = regex.exec(string)) !== null) {
+      // console.log(m)
+      // This is necessary to avoid infinite loops with zero-width matches
+      if (m.index === regex.lastIndex) {
+        regex.lastIndex++
+      }
+      // The result can be accessed through the `m`-variable.
+      m.forEach((match, groupIndex) => {
+        if (groupIndex === 2) matches.push(match)
+        // console.log(`Found match, group ${groupIndex}: ${match}`)
+      });
+    }
+    return matches
+  },
+
   closestWord: function(word, array) {
     array.sort()
     function isEqualToOrNext(element) {

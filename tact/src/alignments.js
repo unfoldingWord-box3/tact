@@ -75,12 +75,10 @@ Alignments.prototype.selectBestAlignments = function() {
   var that = this
   while (that.available.length > 0 && tokenizer.tokenize(neededSource).length > 0) {
     var best = that.bestAlignment()
-    var regexSource = new RegExp("( |^)+?" + best.source + "( |$)+?", 'g')  // using g replaces all assumes all source occurences align to same target
-    var regexTarget = new RegExp("( |^)+?" + best.target + "( |$)+?", 'g')
     that.bestAlignments.push(best)
-    if (best !== undefined && neededSource.match(regexSource) != null) {
-      neededSource = neededSource.replace(regexSource, '  ')
-      neededTarget = neededTarget.replace(regexTarget, '  ')
+    if (best !== undefined && neededSource.match(best.regexSource) != null) {
+      neededSource = neededSource.replace(best.regexSource, '  ')
+      neededTarget = neededTarget.replace(best.regexTarget, '  ')
       that.penalizeUnneededTargets(neededSource, neededTarget)
       that.removeUnneededSources()
     }

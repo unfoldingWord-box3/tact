@@ -6,14 +6,17 @@ var ListGroupItem = require('react-bootstrap').ListGroupItem;
 function Alignment(props) {
   const alignment = props.alignment;
   function className(score) {
-    return ( (score > 1) ? 'correction' : ( score < 0.1 ? 'conflict' : 'suggestion' ) )
+    return ( (score > 1) ? 'correction' : ( score < 0.3 ? 'conflict' : 'suggestion' ) )
   }
   const phrases = alignment.map((phrase, index) =>
     <td key={index}>
-      <ListGroup className='phrase'>
+      <ListGroup className='phrase' onClick={console.log.bind(this, phrase)}>
         <ListGroupItem>{phrase.source}</ListGroupItem>
         <ListGroupItem>{phrase.target}</ListGroupItem>
         <ListGroupItem className={className(phrase.confidence)}>{phrase.confidence}</ListGroupItem>
+        <ListGroupItem className='hidden'>
+          {JSON.stringify(phrase.scores, null, 2)}
+        </ListGroupItem>
       </ListGroup>
     </td>
   );

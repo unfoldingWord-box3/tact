@@ -97,14 +97,20 @@ Table.prototype.dynamicTrain = function(_sourceIndex, _targetIndex, _trainingSet
     this.permutations(alignmentPair, trainingPairs, callback)
   }
 }
-
+// for training pairs
+// get phrases for each training pair
+// get phrases for alignment pair
+// get phrase intersection of alignment pair and each training pair
+//
 Table.prototype.permutations = function(alignmentPair, trainingPairs, callback) {
   var alignments = [] // response
   if (trainingPairs.length > 0) {
     var that = this
 
     var sources = {}, targets = {}, permutations = {}
+    // loop through all trainingPairs which is the training data
     trainingPairs.forEach(function(trainingPair, i) {
+      // get phrases of source and target training pairs
       var sourceTrainingPhrases, targetTrainingPhrases
       if (that.isCorrections) {
         sourceTrainingPhrases = [trainingPair[0]]
@@ -112,10 +118,11 @@ Table.prototype.permutations = function(alignmentPair, trainingPairs, callback) 
       } else {
         sourceTrainingPhrases = ngram.ngram(trainingPair[0], that.options.global.ngram.source)
         targetTrainingPhrases = ngram.ngram(trainingPair[1], that.options.global.ngram.target)
+        // add blank phrases so that things can map to nothing.
         sourceTrainingPhrases.push(' ')
         targetTrainingPhrases.push(' ')
       }
-
+      // get phrases of source and target alignment pair
       var sourceAlignmentPhrases = ngram.ngram(alignmentPair[0], that.options.global.ngram.source)
       var targetAlignmentPhrases
       if (alignmentPair[1] !== undefined) {
@@ -123,7 +130,7 @@ Table.prototype.permutations = function(alignmentPair, trainingPairs, callback) 
       } else {
         targetAlignmentPhrases = targetTrainingPhrases
       }
-
+      // get phrase intersection of this training pair and alignment pair
       var sourceIntersection = tools.intersect(sourceAlignmentPhrases, sourceTrainingPhrases)
       var targetIntersection = tools.intersect(targetAlignmentPhrases, targetTrainingPhrases)
 
@@ -132,35 +139,40 @@ Table.prototype.permutations = function(alignmentPair, trainingPairs, callback) 
           sourceIntersection.push(' ')
           targetIntersection.push(' ')
           // seed sources and targets with tallies for ' '
-          sources[' '] = {global: trainingPairs.length, local: 1}
-          targets[' '] = {global: trainingPairs.length, local: 1}
+          sources[' '] = {global: trainingPairs.length, local: 1, corpus: 1}
+          targets[' '] = {global: trainingPairs.length, local: 1, corpus: 1}
         }
         // loop through the target training phrases to get target global/local totals
         targetTrainingPhrases.forEach(function(targetPhrase) {
-          if (targets[targetPhrase] === undefined) targets[targetPhrase] = {global: 0, local: 0}
+          if (targets[targetPhrase] === undefined) targets[targetPhrase] = {global: 0, local: 0, corpus: 0}
           if (targetPhrase !== ' ') {
             targets[targetPhrase].global += sourceTrainingPhrases.length // tally up all source phrases for global totals
           }
           targets[targetPhrase].local += sourceIntersection.length // if there is both source/target, tally up source phrases for local totals
+          targets[targetPhrase].corpus ++
         })
         // loop through source training phrases and total up source global/local totals
         sourceTrainingPhrases.forEach(function(sourcePhrase) {
-          if (sources[sourcePhrase] === undefined) sources[sourcePhrase] = {global: 0, local: 0}
+          if (sources[sourcePhrase] === undefined) sources[sourcePhrase] = {global: 0, local: 0, corpus: 0}
           if (sourcePhrase !== ' ') {
             sources[sourcePhrase].global += targetTrainingPhrases.length // tally up all target phrases for global totals
           }
           sources[sourcePhrase].local += targetIntersection.length // if there is both source/target, tally up target phrases for local totals
+          sources[sourcePhrase].corpus ++
         })
 
         sourceIntersection.forEach(function(sourcePhrase) {
           // the intersection of the intersection is where to get the true tallies
           if (permutations[sourcePhrase] === undefined) permutations[sourcePhrase] = {}
           targetIntersection.forEach(function(targetPhrase) {
-            // this next object is the basis of an alignment object
-            var isAlignment = alignmentPair[1] !== undefined
-            var alignment = new Alignment(that.options, sourcePhrase, targetPhrase, that.isCorrections, isAlignment)
-            alignment.addTally(1)
+            // check to see if alignment object is already added, if not, add it.
+            var alignment = permutations[sourcePhrase][targetPhrase]
+            if (alignment === undefined) {
+              var isAlignment = alignmentPair[1] !== undefined
+              alignment = new Alignment(that.options, sourcePhrase, targetPhrase, that.isCorrections, isAlignment)
+            }
             // go ahead and do static scoring while inside
+            alignment.addTally(1)
             alignment.addStaticScore(trainingPair)
             permutations[sourcePhrase][targetPhrase] = alignment
           })
@@ -172,6 +184,7 @@ Table.prototype.permutations = function(alignmentPair, trainingPairs, callback) 
       tools.forObject(_targets, function(target, alignment) {
         alignment.addLocalTotals(sources[source].local, targets[target].local)
         alignment.addGlobalTotals(sources[source].global, targets[target].global)
+        alignment.addCorpusTotals(sources[source].corpus, targets[target].corpus)
         alignment.score(alignmentPair)
         alignments.push(alignment)
       })

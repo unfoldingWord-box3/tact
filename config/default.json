@@ -42,12 +42,13 @@
         "ngram": 0.5
       },
       "weights": {
-        "ratio": 10,
-        "uniqueness": 10,
-        "phraseCount": 2,
+        "ratio": 7,
+        "common": 6,
+        "phraseCount": 5,
         "wordOrder": 4,
-        "sizeDelta": 2,
-        "ngram": 2
+        "sizeDelta": 3,
+        "uniqueness": 2,
+        "ngram": 1
       }
     }
   }
