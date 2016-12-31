@@ -10,8 +10,8 @@ function Alignment(options, source, target, isCorrection, isAlignment) {
   this.target = target
   this.sourceTokens = tokenizer.tokenize(this.source)
   this.targetTokens = tokenizer.tokenize(this.target)
-  this.regexSource = new RegExp(`(^|\\s)(${this.source})(?=\\s|$)`, 'g')
-  this.regexTarget = new RegExp(`(^|\\s)(${this.target})(?=\\s|$)`, 'g')
+  this.regexSource = new RegExp('(^|\\s)('+this.source+')(?=\\s|$)', 'g')
+  this.regexTarget = new RegExp('(^|\\s)('+this.target+')(?=\\s|$)', 'g')
   this.options = options
   this.isCorrection = isCorrection
   this.isAlignment = isAlignment

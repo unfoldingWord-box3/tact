@@ -3,7 +3,7 @@ var tokenizer = require('./tokenizer.js')
 var tools = {
 
   match: function(substring, string) {
-    var regex = new RegExp(`(^|\\s)(${substring})(?=\\s|$)`, 'g')
+    var regex = new RegExp('(^|\\s)('+substring+')(?=\\s|$)', 'g')
     // console.log(regex, string)
     var matches = []
     let m
