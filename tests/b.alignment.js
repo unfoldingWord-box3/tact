@@ -293,7 +293,7 @@ describe('Alignment.phraseCountScore()', function() {
     assert.equal(phraseCountScore, 0.5)
   })
   it('should return 0.1 if one is found 10x as much', function() {
-    var alignmentPair = [`a a a a b a a a aa d a a c a aa`, `c b a d`]
+    var alignmentPair = ['a a a a b a a a aa d a a c a aa', 'c b a d']
     var alignment = new tact.Alignment(options, 'a', 'b', false, true)
     var phraseCountScore = alignment.phraseCountScore(alignmentPair)
     assert.equal(phraseCountScore, 0.1)
