@@ -26,8 +26,8 @@
       },
       "concurrency": 1,
       "penalties": {
-        "divide": 1,
-        "subtract": 0.15
+        "divide": 1.5,
+        "subtract": 0
       },
       "bonus": {
         "correction": 1.0
@@ -43,12 +43,11 @@
       },
       "weights": {
         "ratio": 7,
-        "common": 6,
+        "uniqueness": 6,
         "phraseCount": 5,
         "wordOrder": 4,
         "sizeDelta": 3,
-        "uniqueness": 2,
-        "ngram": 1
+        "ngram": 2
       }
     }
   }

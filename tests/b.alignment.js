@@ -7,28 +7,91 @@ var options = require('config').Client
 function reverse(s) {
   return s.split('').reverse().join('')
 }
-describe('Alignment.commonScore()', function() {
-  it('should return 0 when corpus and tally totals are 1', function() {
+
+describe('Alignment.isPhraseScore()', function() {
+  it('should return 1 when corpus and tally totals are 1 and phrase size is 1', function() {
     var alignment = new tact.Alignment(options, 'a', 'b', false, true)
     alignment.addTally(1)
     alignment.addCorpusTotals(1,1)
-    alignment.commonScore()
-    assert.equal(alignment.scores.common, 0)
+    var isPhraseScore = alignment.isPhraseScore()
+    assert.equal(isPhraseScore, 1)
     alignment.addCorpusTotals(0,1)
-    alignment.commonScore()
-    assert.equal(alignment.scores.common, 0)
+    isPhraseScore = alignment.isPhraseScore()
+    assert.equal(isPhraseScore, 1)
   })
-  it('should return 0 when either corpus totals are 1', function() {
+  it('should return 1 when either corpus totals are 1 and phrase size is 1', function() {
+    var alignment = new tact.Alignment(options, 'a', 'b', false, true)
+    alignment.addTally(1)
+    alignment.addCorpusTotals(10,1)
+    var isPhraseScore = alignment.isPhraseScore()
+    assert.equal(isPhraseScore, 1)
+    alignment = new tact.Alignment(options, 'a', 'b', false, true)
+    alignment.addTally(1)
+    alignment.addCorpusTotals(1,10)
+    isPhraseScore = alignment.isPhraseScore()
+    assert.equal(isPhraseScore, 1)
+  })
+  it('should return 0.1 when corpus and tally totals are 1 and phrase size is 2', function() {
+    var alignment = new tact.Alignment(options, 'a b', 'b a', false, true)
+    alignment.addTally(1)
+    alignment.addCorpusTotals(1,1)
+    var isPhraseScore = alignment.isPhraseScore()
+    assert.equal(isPhraseScore, 0.1)
+    alignment.addCorpusTotals(0,1)
+    isPhraseScore = alignment.isPhraseScore()
+    assert.equal(isPhraseScore, 0.1)
+  })
+  it('should return 0.1 when either corpus totals are 1 and phrase size is 2', function() {
+    var alignment = new tact.Alignment(options, 'a b', 'b a', false, true)
+    alignment.addTally(1)
+    alignment.addCorpusTotals(10,1)
+    var isPhraseScore = alignment.isPhraseScore()
+    assert.equal(isPhraseScore, 0.1)
+    alignment = new tact.Alignment(options, 'a b', 'b a', false, true)
+    alignment.addTally(1)
+    alignment.addCorpusTotals(1,10)
+    isPhraseScore = alignment.isPhraseScore()
+    assert.equal(isPhraseScore, 0.1)
+  })
+  it('should return 1 when totals are 2 and phrase size is 1', function() {
+    var alignment = new tact.Alignment(options, 'a', 'b', false, true)
+    alignment.addTally(2)
+    alignment.addCorpusTotals(2,2)
+    var isPhraseScore = alignment.isPhraseScore()
+    assert.equal(isPhraseScore, 1)
+  })
+  it('should return 0.5 when totals are 2 and phrase size is 2', function() {
+    var alignment = new tact.Alignment(options, 'a b', 'b a', false, true)
+    alignment.addTally(2)
+    alignment.addCorpusTotals(2,2)
+    var isPhraseScore = alignment.isPhraseScore()
+    assert.equal(isPhraseScore, 0.5)
+  })
+
+})
+
+describe('Alignment.commonScore()', function() {
+  it('should return 0.1 when corpus and tally totals are 1', function() {
+    var alignment = new tact.Alignment(options, 'a', 'b', false, true)
+    alignment.addTally(1)
+    alignment.addCorpusTotals(1,1)
+    var commonScore = alignment.commonScore()
+    assert.equal(commonScore, 0.1)
+    alignment.addCorpusTotals(0,1)
+    commonScore = alignment.commonScore()
+    assert.equal(commonScore, 0.1)
+  })
+  it('should return 0.1 when either corpus totals are 1', function() {
     var alignment = new tact.Alignment(options, 'a', 'b', false, true)
     alignment.addTally(1)
     alignment.addCorpusTotals(10,1)
     var commonScore = alignment.commonScore()
-    assert.equal(commonScore, 0)
+    assert.equal(commonScore, 0.1)
     alignment = new tact.Alignment(options, 'a', 'b', false, true)
     alignment.addTally(1)
     alignment.addCorpusTotals(1,10)
     commonScore = alignment.commonScore()
-    assert.equal(commonScore, 0)
+    assert.equal(commonScore, 0.1)
   })
   it('should return 0.5 when totals are 2', function() {
     var alignment = new tact.Alignment(options, 'a', 'b', false, true)

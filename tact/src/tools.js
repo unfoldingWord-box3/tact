@@ -14,7 +14,7 @@ var tools = {
         regex.lastIndex++
       }
       // The result can be accessed through the `m`-variable.
-      m.forEach((match, groupIndex) => {
+      m.forEach(function(match, groupIndex) {
         if (groupIndex === 2) matches.push(match)
         // console.log(`Found match, group ${groupIndex}: ${match}`)
       });

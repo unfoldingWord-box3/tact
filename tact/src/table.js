@@ -138,25 +138,18 @@ Table.prototype.permutations = function(alignmentPair, trainingPairs, callback) 
         if (!that.isCorrections) {
           sourceIntersection.push(' ')
           targetIntersection.push(' ')
-          // seed sources and targets with tallies for ' '
-          sources[' '] = {global: trainingPairs.length, local: 1, corpus: 1}
-          targets[' '] = {global: trainingPairs.length, local: 1, corpus: 1}
         }
         // loop through the target training phrases to get target global/local totals
         targetTrainingPhrases.forEach(function(targetPhrase) {
           if (targets[targetPhrase] === undefined) targets[targetPhrase] = {global: 0, local: 0, corpus: 0}
-          if (targetPhrase !== ' ') {
-            targets[targetPhrase].global += sourceTrainingPhrases.length // tally up all source phrases for global totals
-          }
+          targets[targetPhrase].global += sourceTrainingPhrases.length // tally up all source phrases for global totals
           targets[targetPhrase].local += sourceIntersection.length // if there is both source/target, tally up source phrases for local totals
           targets[targetPhrase].corpus ++
         })
         // loop through source training phrases and total up source global/local totals
         sourceTrainingPhrases.forEach(function(sourcePhrase) {
           if (sources[sourcePhrase] === undefined) sources[sourcePhrase] = {global: 0, local: 0, corpus: 0}
-          if (sourcePhrase !== ' ') {
-            sources[sourcePhrase].global += targetTrainingPhrases.length // tally up all target phrases for global totals
-          }
+          sources[sourcePhrase].global += targetTrainingPhrases.length // tally up all target phrases for global totals
           sources[sourcePhrase].local += targetIntersection.length // if there is both source/target, tally up target phrases for local totals
           sources[sourcePhrase].corpus ++
         })

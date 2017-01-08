@@ -85,6 +85,16 @@ Alignment.prototype.averageStaticScores = function() {
   return tools.averageObjects(this.staticScores)
 }
 // If an ngram is not used often, it is likely not a phrase, the more it is found, the more likely it is a phrase
+Alignment.prototype.isPhraseScore = function() {
+  var isPhrase
+  if (this.sourceTokens.length === 1 && this.targetTokens.length === 1) {
+    isPhrase = 1
+  } else {
+    isPhrase = this.commonScore()
+  }
+  return isPhrase
+}
+// calculate floor of source/target commonality of the phrase 1-(1/x) x:1,y:0; x:2,y:0.5; x:100,y:0.99...
 Alignment.prototype.commonScore = function() {
   var common = 0
   if (this.sourceTokens.length > 0 && this.targetTokens.length > 0) {
@@ -94,7 +104,7 @@ Alignment.prototype.commonScore = function() {
     var common = Math.min(sourceCommonScore, targetCommonScore)
     var common = (common + tallyCommonScore) / 2
   }
-  if (common < 0) common = 0
+  if (common <= 0.1) common = 0.1
   return common
 }
 
@@ -120,6 +130,7 @@ Alignment.prototype.uniquenessScore = function() {
   that.uniqueness.source = that.totals.localSource / that.totals.globalSource
   that.uniqueness.target = that.totals.localTarget / that.totals.globalTarget
   var deltaUniqueness = Math.abs(that.uniqueness.source - that.uniqueness.target)
+  deltaUniqueness = Math.min(Math.max(deltaUniqueness, 0), 0.99)
   that.scores.uniqueness = 1.00 - deltaUniqueness // if the delta of uniqueness is great, make score lower, if the delta is small, make score higher
 }
 // favor phrases over words
@@ -128,7 +139,7 @@ Alignment.prototype.ngramScore = function(alignmentPair) {
   var sourceNgramCount = this.sourceTokens.length
   var targetNgramCount = this.targetTokens.length
   if (sourceNgramCount === 0 || targetNgramCount === 0) {
-    ngramScore = 0
+    ngramScore = 0.8
   } else {
     if (this.isCorrection) {
       var deltaNgramMax = Math.abs(this.options.global.ngram.source - sourceNgramCount)
@@ -149,7 +160,7 @@ Alignment.prototype.ngramScore = function(alignmentPair) {
 Alignment.prototype.phraseCountScore = function(alignmentPair, verbose) {
   var that = this
   var sourceString = alignmentPair[0], targetString = alignmentPair[1]
-  if (that.source === ' ' || that.target === ' ') return 0.6
+  if (that.source === ' ' || that.target === ' ') return 0.8
   var sourceMatchCount = tools.match(that.source, sourceString).length
   var targetMatchCount = tools.match(that.target, targetString).length
   var deltaCount = Math.abs(sourceMatchCount - targetMatchCount)
@@ -181,7 +192,7 @@ Alignment.prototype.wordOrderScore = function(alignmentPair) {
 //favor words/ngrams around the same length relative to their language length
 Alignment.prototype.sizeDeltaScore = function() {
   var that = this
-  if (that.target == ' ') return 0.6
+  if (that.target === ' ') return 0.8
   var sourceSize = that.source.length
   var targetSize = that.target.length
   var maxSize = Math.max(sourceSize, targetSize)
@@ -236,6 +247,7 @@ Alignment.prototype.score = function(alignmentPair) {
   that.getStaticScore(alignmentPair)
 
   that.scores.common = that.commonScore()
+  that.scores.isPhrase = that.isPhraseScore()
 
   if (that.isCorrection) {
     that.weightSum = that.weightSum + that.options.align.weights.ngram * (that.options.align.corrections.ngramMultiplier - 1)
@@ -246,13 +258,16 @@ Alignment.prototype.score = function(alignmentPair) {
     that.options.align.weights.ngram * (that.isCorrection ? that.options.align.corrections.ngramMultiplier : 1) * that.scores.ngram +
     that.options.align.weights.phraseCount * that.scores.phraseCount +
     that.options.align.weights.wordOrder * that.scores.wordOrder +
-    that.options.align.weights.sizeDelta * that.scores.sizeDelta +
-    that.options.align.weights.common * that.scores.common
+    that.options.align.weights.sizeDelta * that.scores.sizeDelta
   ) / that.weightSum
+
+  that.confidence = that.scores.isPhrase * that.confidence
+
   if (that.isCorrection == true) {
     that.confidence = that.confidence + that.options.align.bonus.correction
   }
-  that.confidence = Math.round(that.confidence * 1000) / 1000
+
+  that.confidence = Math.round(that.confidence * 10000) / 10000
   if (Number.isNaN(that.confidence) || that.confidence === 0) {console.log(alignmentPair, that)}
 }
 // instead of previous approach of conflicts, look to see what is needed
