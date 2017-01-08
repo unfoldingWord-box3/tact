@@ -22,15 +22,6 @@ var tools = {
     return matches
   },
 
-  closestWord: function(word, array) {
-    array.sort()
-    function isEqualToOrNext(element) {
-      return element.toLowerCase() >= word.toLowerCase()
-    }
-    var _word = array.find(isEqualToOrNext)
-    return _word
-  },
-
   intersect: function(a, b) {
     a.sort()
     b.sort()
@@ -118,15 +109,4 @@ if (typeof Object.merge !== 'function') {
     for(var i in o2) { o1[i] = o2[i] }
     return o1
   };
-}
-
-if (typeof Array.find !== 'function') {
-  Array.prototype.find = function(predicate) {
-    for (var i = 0, value; i < this.length; i++) {
-      value = this[i]
-      if (predicate.call(this, value))
-      return value
-    }
-    return undefined;
-  }
 }
