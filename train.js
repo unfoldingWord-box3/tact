@@ -20,7 +20,8 @@ tact.corpus.parseFiles(options.sourceCorrectionsFile, options.targetCorrectionsF
   // console.time('correctionsTable-1')
   tact.corpus.parseFiles(options.sourceCorpusFile, options.targetCorpusFile, function(corpus) {
     // console.time('corpusTable-1')
-    tact.training.train(_options, corpus, corrections, progress, progress,
+    var training = new tact.Training(_options, corpus, corrections)
+    training.train(progress, progress,
       function() {
         // console.timeEnd('correctionsTable-1')
       },

@@ -24,9 +24,10 @@
         "sizeDelta": true,
         "penalties": true
       },
+      "concurrency": 1,
       "penalties": {
-        "divide": 1,
-        "subtract": 0.15
+        "divide": 1.5,
+        "subtract": 0
       },
       "bonus": {
         "correction": 1.0
@@ -34,20 +35,19 @@
       "corrections": {
         "ngramMultiplier": 10
       },
-      "ngrams": {
-        "sourceScores": [0, 1.0, 0.8, 0.6],
-        "targetScores": [0, 0.9, 1.0, 0.8, 0.7]
-      },
       "staticScoreRatios": {
         "phraseCount": 0.5,
-        "wordOrder": 0.5
+        "wordOrder": 0.5,
+        "sizeDelta": 0.5,
+        "ngram": 0.5
       },
       "weights": {
-        "ratio": 10,
-        "ngram": 3,
-        "phraseCount": 2,
+        "ratio": 7,
+        "uniqueness": 6,
+        "phraseCount": 5,
         "wordOrder": 4,
-        "sizeDelta": 5
+        "sizeDelta": 3,
+        "ngram": 2
       }
     }
   }

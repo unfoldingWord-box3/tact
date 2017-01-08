@@ -1,24 +1,31 @@
-var wordAligner = require('./src/wordAligner.js')
+var Alignments = require('./src/alignments.js')
 var async = require('async')
 
-var align = function(options, alignmentPairs, progress, callback) {
+function Aligning(options) {
+  this.options = options
+}
+
+Aligning.prototype.align = function(alignmentPairs, progress, callback) {
   console.log('aligning...')
   console.time('alignment')
   var count = alignmentPairs.length
   var completed = 0
-  async.mapLimit(alignmentPairs, 1, // cpu is currently pegged with just one
+  var that = this
+  async.mapLimit(alignmentPairs, that.options.align.concurrency, // cpu is currently pegged with just one
     function(alignmentPair, _callback) {
-      wordAligner.align(options, alignmentPair, function(alignment) {
+      var alignments = new Alignments(that.options)
+      alignments.align(alignmentPair, null, function(orderedAlignment) {
         completed++
         progress(completed/count)
-        _callback(null, alignment)
+        _callback(null, orderedAlignment)
       })
     },
-    function(err, alignments) {
+    function(err, orderedAlignment) {
       // console.log(JSON.stringify(alignments, null, 2))
       console.timeEnd('alignment')
-      callback(alignments)
+      callback(orderedAlignment)
     }
   )
 }
-exports.align = align
+
+exports = module.exports = Aligning

@@ -3,6 +3,7 @@ var tokenizer = require('./tokenizer.js')
 var ngram = {
   ngrams: {},
   ngram: function(string, n) {
+    if (typeof string !== 'string') throw 'ngram.ngram(string) string is not String: ' + string
     var key = n + string
     var ngramArray = this.ngrams[key]
     if (ngramArray === undefined) {
@@ -20,20 +21,20 @@ var ngram = {
       }
       this.ngrams[key] = ngramArray
     }
-    return ngramArray;
+    return ngramArray.slice()
   },
 
   _ngram: function(array, length) {
-    var ngramsArray = [];
+    var ngramsArray = []
     for (var i = 0; i < array.length - (length - 1); i++) {
-      var subNgramsArray = [];
+      var subNgramsArray = []
       for (var j = 0; j < length; j++) {
         subNgramsArray.push(array[i + j])
       }
-      ngramsArray.push(subNgramsArray);
+      ngramsArray.push(subNgramsArray)
     }
-    return ngramsArray;
+    return ngramsArray
   }
 }
 
-exports = module.exports = ngram;
+exports = module.exports = ngram

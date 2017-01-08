@@ -17,8 +17,17 @@ function progress(percent) {
 tact.corpus.parseFiles(options.sourceFile, options.targetFile, function(alignmentPairs) {
   alignmentPairs = alignmentPairs.slice(options.first,options.first+options.count)
   // console.time('alignment-1')
-  tact.aligning.align(_options, alignmentPairs, progress, function(alignments) {
-    console.log(JSON.stringify(alignments, null, 2))
+  var aligning = new tact.Aligning(_options)
+  aligning.align(alignmentPairs, progress, function(alignments) {
+    newAlignments = []
+    alignments.forEach(function(_alignments, index) {
+      _newAlignments = []
+      _alignments.forEach(function(alignment, index) {
+        _newAlignments.push([alignment.source, alignment.target, alignment.confidence])
+      })
+      newAlignments.push(_newAlignments)
+    })
+    console.log(JSON.stringify(newAlignments, null, 2))
     // console.timeEnd('alignment-1')
   })
 })

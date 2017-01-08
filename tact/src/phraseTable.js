@@ -1,55 +1,63 @@
 var tools = require('./tools.js')
 var ngram = require('./ngram.js')
-var table = require('./table.js')
-var scoring = require('./scoring.js')
+var Table = require('./table.js')
 var tokenizer = require('./tokenizer.js')
 
-var phraseTable = {
-  tableName: 'phrases',
-  table: table,
-  sourceIndex: {},
-  targetIndex: {},
-  prune: function(options, alignmentPair, callback) {
-    table.phrases(options, this.tableName, alignmentPair, callback)
-  },
-
-  append: function(options, pair, index) {
-    var source = pair[0], target = pair[1]
-    var sourceWords = tokenizer.tokenize(source)
-    sourceWords.forEach(function(sourceWord, _index) {
-      if (phraseTable.sourceIndex[sourceWord] === undefined) {
-        phraseTable.sourceIndex[sourceWord] = []
-      }
-      phraseTable.sourceIndex[sourceWord].push(index)
-    })
-    var targetWords = tokenizer.tokenize(target)
-    targetWords.forEach(function(targetWord, _index) {
-      if (phraseTable.targetIndex[targetWord] === undefined) {
-        phraseTable.targetIndex[targetWord] = []
-      }
-      phraseTable.targetIndex[targetWord].push(index)
-    })
-  },
-
-  // can pass in table so that it can incriment counts
-  generate: function(options, trainingSet, progress, callback) {
-    table.init(options, this.tableName, function(){
-      // loop through trainingSet
-      // generate ngrams of source and target
-      var count = trainingSet.length
-      console.log("indexing phrases...")
-      trainingSet.forEach(function(pair, index) {
-        phraseTable.append(options, pair, index)
-      })
-      progress(0.33)
-      console.log("storing phraseIndex...")
-      table.store(options, phraseTable.tableName, phraseTable.sourceIndex, phraseTable.targetIndex, trainingSet, progress, function() {
-        phraseTable.sourceIndex = {}
-        phraseTable.targetIndex = {}
-        callback()
-      })
-    })
-  }
+function PhraseTable(options) {
+  this.options = options
+  this.tableName = 'phrases'
+  this.table = new Table(this.tableName, this.options)
+  this.sourceIndex = {}
+  this.targetIndex = {}
 }
 
-exports = module.exports = phraseTable
+PhraseTable.prototype.prune = function(alignmentPair, callback) {
+  this.table.phrases(alignmentPair, callback)
+}
+
+PhraseTable.prototype.getBySource = function(source, callback) {
+  this.table.getBySource(source, callback)
+}
+
+PhraseTable.prototype.append = function(pair, index) {
+  var source = pair[0], target = pair[1]
+  var sourceWords = tokenizer.tokenize(source)
+  var that = this
+  // sourceWords.push(' ')
+  sourceWords.forEach(function(sourceWord, _index) {
+    if (that.sourceIndex[sourceWord] === undefined) {
+      that.sourceIndex[sourceWord] = []
+    }
+    that.sourceIndex[sourceWord].push(index)
+  })
+  var targetWords = tokenizer.tokenize(target)
+  // targetWords.push(' ')
+  targetWords.forEach(function(targetWord, _index) {
+    if (that.targetIndex[targetWord] === undefined) {
+      that.targetIndex[targetWord] = []
+    }
+    that.targetIndex[targetWord].push(index)
+  })
+}
+// can pass in table so that it can incriment counts
+PhraseTable.prototype.generate = function(trainingSet, progress, callback) {
+  var that = this
+  this.table.cleanup(function(){
+    that.sourceIndex = {}
+    that.targetIndex = {}
+    // loop through trainingSet
+    console.log("indexing phrases...")
+    trainingSet.forEach(function(pair, index) {
+      that.append(pair, index)
+    })
+    progress(0.25)
+    console.log("storing phraseIndex...")
+    that.table.store(that.sourceIndex, that.targetIndex, trainingSet, progress, function() {
+      that.sourceIndex = {}
+      that.targetIndex = {}
+      callback()
+    })
+  })
+}
+
+exports = module.exports = PhraseTable

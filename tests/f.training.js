@@ -25,20 +25,22 @@ sources.forEach(function(string, index){ targets.push(reverse(string)) })
 var corrections = []
 sources.forEach(function(string, index){ corrections.push([string, targets[index]]) })
 
+var training = new tact.Training(options, corpus, corrections)
+
 describe('training.train', function() {
   it('should populate the corpus and corrections tables', function(done) {
     function progress() {}
     function corpusCallback() {}
     function correctionsCallback() {}
     function callback() {
-      tact.phraseTable.table.getCount(options, tact.phraseTable.tableName, function(count) {
+      training.phraseTable.table.getCount(function(count) {
         assert.equal(count, 3)
-        tact.correctionsTable.table.getCount(options, tact.correctionsTable.tableName, function(count) {
+        training.correctionsTable.table.getCount(function(count) {
           assert.equal(count, 3)
           done()
         })
       })
     }
-    tact.training.train(options, corpus, corrections, progress, progress, corpusCallback, correctionsCallback, callback)
+    training.train(progress, progress, corpusCallback, correctionsCallback, callback)
   })
 })

@@ -2,12 +2,32 @@ var tokenizer = require('./tokenizer.js')
 
 var tools = {
 
+  match: function(substring, string) {
+    var regex = new RegExp('(^|\\s)('+substring+')(?=\\s|$)', 'g')
+    // console.log(regex, string)
+    var matches = []
+    var m
+    while ((m = regex.exec(string)) !== null) {
+      // console.log(m)
+      // This is necessary to avoid infinite loops with zero-width matches
+      if (m.index === regex.lastIndex) {
+        regex.lastIndex++
+      }
+      // The result can be accessed through the `m`-variable.
+      m.forEach(function(match, groupIndex) {
+        if (groupIndex === 2) matches.push(match)
+        // console.log(`Found match, group ${groupIndex}: ${match}`)
+      });
+    }
+    return matches
+  },
+
   intersect: function(a, b) {
     a.sort()
     b.sort()
     var intersection = []
     var ai=0, bi=0
-    do {
+    while ( ai < a.length && bi < b.length ) {
        if      (a[ai] < b[bi] ){ ai++ }
        else if (a[ai] > b[bi] ){ bi++ }
        else { /* they're equal */
@@ -15,11 +35,13 @@ var tools = {
          ai++
          bi++
        }
-    } while ( ai < a.length && bi < b.length )
+    }
     return intersection
   },
 
   getIndicesOf: function(phrase, string) {
+    if (typeof phrase !== 'string') throw 'tools.getIndicesOf(phrase) phrase is not String: ' + phrase
+    if (typeof string !== 'string') throw 'tools.getIndicesOf(string) string is not String: ' + string
     var phraseLength = phrase.length
     if (phraseLength == 0) return []
     var startIndex = 0, index, indices = []
@@ -84,7 +106,7 @@ module = module.exports = tools
 
 if (typeof Object.merge !== 'function') {
   Object.merge = function (o1, o2) { // Function to merge all of the properties from one object into another
-    for(var i in o2) { o1[i] = o2[i]; }
-    return o1;
+    for(var i in o2) { o1[i] = o2[i] }
+    return o1
   };
 }
