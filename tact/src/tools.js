@@ -121,7 +121,7 @@ if (typeof Object.merge !== 'function') {
 }
 
 if (typeof Array.find !== 'function') {
-  Array.find = function(predicate) {
+  Array.prototype.find = function(predicate) {
     for (var i = 0, value; i < this.length; i++) {
       value = this[i]
       if (predicate.call(this, value))
