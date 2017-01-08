@@ -115,7 +115,18 @@ module = module.exports = tools
 
 if (typeof Object.merge !== 'function') {
   Object.merge = function (o1, o2) { // Function to merge all of the properties from one object into another
-    for(var i in o2) { o1[i] = o2[i]; }
-    return o1;
+    for(var i in o2) { o1[i] = o2[i] }
+    return o1
   };
+}
+
+if (typeof Array.find !== 'function') {
+  Array.find = function(predicate) {
+    for (var i = 0, value; i < this.length; i++) {
+      value = this[i]
+      if (predicate.call(this, value))
+      return value
+    }
+    return undefined;
+  }
 }
