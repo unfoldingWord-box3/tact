@@ -9,6 +9,24 @@ function reverse(s) {
 }
 
 describe('Alignment.isPhraseScore()', function() {
+  it('should return 1 when corpus and tally totals are 1 and phrase size is 0', function() {
+    var alignment = new tact.Alignment(options, 'a', ' ', false, true)
+    alignment.addTally(1)
+    alignment.addCorpusTotals(1,1)
+    var isPhraseScore = alignment.isPhraseScore()
+    assert.equal(isPhraseScore, 0.9)
+    alignment.addCorpusTotals(0,1)
+    isPhraseScore = alignment.isPhraseScore()
+    assert.equal(isPhraseScore, 0.9)
+    var alignment = new tact.Alignment(options, ' ', 'b', false, true)
+    alignment.addTally(1)
+    alignment.addCorpusTotals(1,1)
+    var isPhraseScore = alignment.isPhraseScore()
+    assert.equal(isPhraseScore, 0.8)
+    alignment.addCorpusTotals(0,1)
+    isPhraseScore = alignment.isPhraseScore()
+    assert.equal(isPhraseScore, 0.8)
+  })
   it('should return 1 when corpus and tally totals are 1 and phrase size is 1', function() {
     var alignment = new tact.Alignment(options, 'a', 'b', false, true)
     alignment.addTally(1)

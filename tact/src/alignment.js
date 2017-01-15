@@ -89,6 +89,10 @@ Alignment.prototype.isPhraseScore = function() {
   var isPhrase
   if (this.sourceTokens.length === 1 && this.targetTokens.length === 1) {
     isPhrase = 1
+  } else if (this.sourceTokens.length === 1 && this.targetTokens.length === 0) {
+    isPhrase = 0.9
+  } else if (this.sourceTokens.length === 0 && this.targetTokens.length === 1) {
+    isPhrase = 0.8
   } else {
     isPhrase = this.commonScore()
   }
