@@ -2286,9 +2286,7 @@ var correctionsSource = `Βίβλος
 τὸν Ἰούδαν
 καὶ
 τοὺς ἀδελφοὺς
-αὐτοῦ
-
-του`
+αὐτοῦ`
 
 var correctionsTarget = `The book of
 the genealogy of
@@ -2312,9 +2310,7 @@ begat
 Judah
 and
 brothers
-his
-
-the`
+his`
 
 class CorpusForm extends React.Component {
   constructor(props) {
