@@ -61,7 +61,7 @@ Table.prototype.dynamicTrain = function(_sourceIndex, _targetIndex, _trainingSet
   if (_trainingSet.length === 0) {
     callback(alignments)
   } else {
-    var sourceWords = tokenizer.tokenize(alignmentPair[0])
+    var sourceWords = tokenizer.tokenizeSource(alignmentPair[0])
     var trainingIndices = {}
     sourceWords.forEach(function(sourceWord, i) {
       var indices = _sourceIndex[sourceWord]
@@ -78,7 +78,7 @@ Table.prototype.dynamicTrain = function(_sourceIndex, _targetIndex, _trainingSet
         })
       })
     } else {
-      var targetWords = tokenizer.tokenize(alignmentPair[1])
+      var targetWords = tokenizer.tokenizeTarget(alignmentPair[1])
       targetWords.forEach(function(targetWord, i) {
         var indices = _targetIndex[targetWord]
         if (indices !== undefined) {
@@ -116,17 +116,17 @@ Table.prototype.permutations = function(alignmentPair, trainingPairs, callback) 
         sourceTrainingPhrases = [trainingPair[0]]
         targetTrainingPhrases = [trainingPair[1]]
       } else {
-        sourceTrainingPhrases = ngram.ngram(trainingPair[0], that.options.global.ngram.source)
-        targetTrainingPhrases = ngram.ngram(trainingPair[1], that.options.global.ngram.target)
+        sourceTrainingPhrases = ngram.ngramSource(trainingPair[0])
+        targetTrainingPhrases = ngram.ngramTarget(trainingPair[1])
         // add blank phrases so that things can map to nothing.
         sourceTrainingPhrases.push(' ')
         targetTrainingPhrases.push(' ')
       }
       // get phrases of source and target alignment pair
-      var sourceAlignmentPhrases = ngram.ngram(alignmentPair[0], that.options.global.ngram.source)
+      var sourceAlignmentPhrases = ngram.ngramSource(alignmentPair[0])
       var targetAlignmentPhrases
       if (alignmentPair[1] !== undefined) {
-        targetAlignmentPhrases = ngram.ngram(alignmentPair[1], that.options.global.ngram.target)
+        targetAlignmentPhrases = ngram.ngramTarget(alignmentPair[1])
       } else {
         targetAlignmentPhrases = targetTrainingPhrases
       }

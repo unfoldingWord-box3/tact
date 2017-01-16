@@ -39,13 +39,13 @@ var tools = {
     return intersection
   },
 
-  getIndicesOf: function(phrase, string) {
+  getIndicesOf: function(phrase, string, regexpTokenizer) {
     if (typeof phrase !== 'string') throw 'tools.getIndicesOf(phrase) phrase is not String: ' + phrase
     if (typeof string !== 'string') throw 'tools.getIndicesOf(string) string is not String: ' + string
     var phraseLength = phrase.length
     if (phraseLength == 0) return []
     var startIndex = 0, index, indices = []
-    while ((index = tokenizer.tokenize(string).join(' ').indexOf(phrase, startIndex)) > -1) {
+    while ((index = tokenizer.tokenize(string, regexpTokenizer).join(' ').indexOf(phrase, startIndex)) > -1) {
         indices.push(index);
         startIndex = index + phraseLength;
     }

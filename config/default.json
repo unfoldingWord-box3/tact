@@ -6,6 +6,10 @@
       },
       "sourceLanguage": "greek",
       "targetLanguage": "english",
+      "tokenizer": {
+        "source": "\\PL+?",
+        "target": "\\PL+?"
+      },
       "ngram": {
         "source": 2,
         "target": 3

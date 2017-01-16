@@ -21,7 +21,7 @@ PhraseTable.prototype.getBySource = function(source, callback) {
 
 PhraseTable.prototype.append = function(pair, index) {
   var source = pair[0], target = pair[1]
-  var sourceWords = tokenizer.tokenize(source)
+  var sourceWords = tokenizer.tokenizeSource(source)
   var that = this
   // sourceWords.push(' ')
   sourceWords.forEach(function(sourceWord, _index) {
@@ -30,7 +30,7 @@ PhraseTable.prototype.append = function(pair, index) {
     }
     that.sourceIndex[sourceWord].push(index)
   })
-  var targetWords = tokenizer.tokenize(target)
+  var targetWords = tokenizer.tokenizeTarget(target)
   // targetWords.push(' ')
   targetWords.forEach(function(targetWord, _index) {
     if (that.targetIndex[targetWord] === undefined) {

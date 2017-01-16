@@ -1,16 +1,23 @@
 var tokenizer = require('./tokenizer.js')
+var options = require('config').Client
 
 var ngram = {
   ngrams: {},
-  ngram: function(string, n) {
+  ngramSource: function(string) {
+    return this.ngram(string, options.global.ngram.source, options.global.tokenizer.source)
+  },
+  ngramTarget: function(string) {
+    return this.ngram(string, options.global.ngram.target, options.global.tokenizer.target)
+  },
+  ngram: function(string, n, regexpTokenizer) {
     if (typeof string !== 'string') throw 'ngram.ngram(string) string is not String: ' + string
-    var key = n + string
+    var key = regexpTokenizer + n + string
     var ngramArray = this.ngrams[key]
     if (ngramArray === undefined) {
       ngramArray = []
       var i
       for (i=1; i < n+1; i++) {
-        var tokens = tokenizer.tokenize(string)
+        var tokens = tokenizer.tokenize(string, regexpTokenizer)
         var _ngrams = ngram._ngram(tokens, i)
         _ngrams.forEach(function(_ngramArray, _i) {
           var ngramString = _ngramArray.join(' ')

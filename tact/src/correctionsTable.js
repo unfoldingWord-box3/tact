@@ -20,7 +20,7 @@ CorrectionsTable.prototype.getBySource = function(sourcePhrase, callback) {
 
 CorrectionsTable.prototype.append = function(pair, index) {
   var source = pair[0], target = pair[1]
-  var sourceWords = tokenizer.tokenize(source)
+  var sourceWords = tokenizer.tokenizeSource(source)
   var that = this
   sourceWords.forEach(function(sourceWord, _index) {
     if (that.sourceIndex[sourceWord] === undefined) {
@@ -28,7 +28,7 @@ CorrectionsTable.prototype.append = function(pair, index) {
     }
     that.sourceIndex[sourceWord].push(index)
   })
-  var targetWords = tokenizer.tokenize(target)
+  var targetWords = tokenizer.tokenizeTarget(target)
   targetWords.forEach(function(targetWord, _index) {
     if (that.targetIndex[targetWord] === undefined) {
       that.targetIndex[targetWord] = []

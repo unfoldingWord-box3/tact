@@ -8,8 +8,8 @@ function Alignment(options, source, target, isCorrection, isAlignment) {
   if (typeof target !== 'string') throw 'Alignment(target) target is not String: ' + target
   this.source = source
   this.target = target
-  this.sourceTokens = tokenizer.tokenize(this.source)
-  this.targetTokens = tokenizer.tokenize(this.target)
+  this.sourceTokens = tokenizer.tokenizeSource(this.source)
+  this.targetTokens = tokenizer.tokenizeTarget(this.target)
   this.regexSource = new RegExp('(^|\\s)('+this.source+')(?=\\s|$)', 'g')
   this.regexTarget = new RegExp('(^|\\s)('+this.target+')(?=\\s|$)', 'g')
   this.options = options
@@ -150,10 +150,10 @@ Alignment.prototype.ngramScore = function(alignmentPair) {
       ngramScore = 1/(deltaNgramMax+1)
     } else {
       if (alignmentPair[1] === undefined) alignmentPair[1] = ''
-      var sourceStringNgramCount = tokenizer.tokenize(alignmentPair[0]).length
-      var targetStringNgramCount = tokenizer.tokenize(alignmentPair[1]).length
-      var sourceNgramRatio = sourceNgramCount / sourceStringNgramCount
-      var targetNgramRatio = targetNgramCount / targetStringNgramCount
+      var sourceStringTokenCount = tokenizer.tokenizeSource(alignmentPair[0]).length
+      var targetStringTokenCount = tokenizer.tokenizeTarget(alignmentPair[1]).length
+      var sourceNgramRatio = sourceNgramCount / sourceStringTokenCount
+      var targetNgramRatio = targetNgramCount / targetStringTokenCount
       var deltaNgramRatio =  Math.abs(sourceNgramRatio - targetNgramRatio)
       ngramScore = Math.pow( (1.00 - deltaNgramRatio), 5 )
     }
@@ -177,8 +177,8 @@ Alignment.prototype.wordOrderScore = function(alignmentPair) {
   var sourceString = alignmentPair[0], targetString = alignmentPair[1]
   if (that.source === ' ' || that.target === ' ') return 0.8
   if (targetString === ' ' || sourceString === ' ') return 0.8
-  var sourceIndices = tools.getIndicesOf(that.source, sourceString)
-  var targetIndices = tools.getIndicesOf(that.target, targetString)
+  var sourceIndices = tools.getIndicesOf(that.source, sourceString, that.options.global.tokenizer.source)
+  var targetIndices = tools.getIndicesOf(that.target, targetString, that.options.global.tokenizer.target)
   sourceIndices = [sourceIndices[0], sourceIndices[sourceIndices.length-1]]
   targetIndices = [targetIndices[0], targetIndices[targetIndices.length-1]]
   var deltaRatios = []

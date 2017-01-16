@@ -44,15 +44,15 @@ Alignments.prototype.validateArguments = function(alignmentPair, sourcePhrase) {
   if (typeof alignmentPair[0] !== 'string') throw 'Alignments() source is not String: ' + alignmentPair[0]
   if (typeof alignmentPair[1] !== 'string') throw 'Alignments() target is not String: ' + alignmentPair[1]
   if (sourcePhrase !== undefined && sourcePhrase !== null && typeof sourcePhrase !== 'string') throw 'Alignments() sourcePhrase is not String: ' + sourcePhrase
-  if (typeof sourcePhrase === 'string' && tokenizer.tokenize(sourcePhrase).length > 1) {
+  if (typeof sourcePhrase === 'string' && tokenizer.tokenizeSource(sourcePhrase).length > 1) {
     this.alignmentPair = [sourcePhrase, alignmentPair[1]]
   } else {
     this.alignmentPair = alignmentPair.slice()
   }
   this.alignmentSource = alignmentPair[0]
   this.alignmentTarget = alignmentPair[1]
-  this.alignmentSourceTokens = tokenizer.tokenize(this.alignmentSource)
-  this.alignmentTargetTokens = tokenizer.tokenize(this.alignmentTarget)
+  this.alignmentSourceTokens = tokenizer.tokenizeSource(this.alignmentSource)
+  this.alignmentTargetTokens = tokenizer.tokenizeTarget(this.alignmentTarget)
 }
 // get the alignments from phraseTable and correctionsTable
 Alignments.prototype.getAlignments = function(alignmentPair, sourcePhrase, callback) {
@@ -73,7 +73,7 @@ Alignments.prototype.selectBestAlignments = function() {
   var neededTarget = this.alignmentTargetTokens.join(' ')
   // use all source words, until you run out of words or alignments
   var that = this
-  while (that.available.length > 0 && tokenizer.tokenize(neededSource).length > 0) {
+  while (that.available.length > 0 && tokenizer.tokenizeSource(neededSource).length > 0) {
     var best = that.bestAlignment()
     that.bestAlignments.push(best)
     if (best !== undefined && neededSource.match(best.regexSource) != null) {
