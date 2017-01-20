@@ -48,7 +48,7 @@ describe('table', function() {
   it('getBySource() should return alignments for all targets', function(done) {
     var sourcePhrase = 'hello'
     table.getBySource(sourcePhrase, function(alignments) {
-      var count = ngram.ngramTarget(trainingSet[0][1]).length + 1
+      var count = ngram.ngram(trainingSet[0][1], 3).length + 1
       count = count * 2 // handle injection of ' ' source
       assert.equal(alignments.length, count)
       done()

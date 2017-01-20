@@ -2360,10 +2360,9 @@ class CorpusForm extends React.Component {
 
   handleSubmit(event) {
     event.preventDefault()
-    console.log(this.state)
     var _this = this
-    tact.corpus.pivot(_this.state.corpusSource.split('\n'), _this.state.corpusTarget.split('\n'), function(corpus) {
-      tact.corpus.pivot(_this.state.correctionsSource.split('\n'), _this.state.correctionsTarget.split('\n'), function(corrections) {
+    tact.corpus.pivot(_this.state.options, _this.state.corpusSource.split('\n'), _this.state.corpusTarget.split('\n'), function(corpus) {
+      tact.corpus.pivot(_this.state.options, _this.state.correctionsSource.split('\n'), _this.state.correctionsTarget.split('\n'), function(corrections) {
         var training = new tact.Training(_this.state.options, corpus, corrections)
         var aligning = new tact.Aligning(_this.state.options)
         function progress(percent) {

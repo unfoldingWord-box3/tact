@@ -7,8 +7,8 @@
       "sourceLanguage": "greek",
       "targetLanguage": "english",
       "tokenizer": {
-        "source": "\\PL+?",
-        "target": "\\PL+?"
+        "source": ["[^\\pL\\pM]+?","g"],
+        "target": ["[^\\pL\\pM]+?","g"]
       },
       "ngram": {
         "source": 2,

@@ -1,30 +1,44 @@
-var XRegExp = require('xregexp');
-var options = require('config').Client
+var XRegExp = require('xregexp')
 
-var tokenizer = {
-  tokens: {},
-  nonUnicodeLetter: XRegExp('\\PL+?', 'g'), // var nonUnicodeLetter = XRegExp('[^\\pL]+');
-  tokenizeSource: function(string) {
-    return this.tokenize(string, options.global.tokenizer.source)
-  },
-  tokenizeTarget: function(string) {
-    return this.tokenize(string, options.global.tokenizer.target)
-  },
-  tokenize: function(string, regexp) {
-    if (typeof string !== 'string') throw 'tokenizer.tokenize() string is not String: ' + string
-    if (typeof regexp !== 'string') throw 'tokenizer.tokenize() regexp is not String: ' + regexp
-    var tokenArray = tokenizer.tokens[string]
-    if (tokenArray === undefined || tokenArray.length === 0) {
-      tokenArray = [];
-      var xregexp = XRegExp(regexp, 'g')
-      var _tokens = string.split(xregexp)
-      _tokens.forEach(function(token) {
-        token.trim()
-        if (token.length > 0) tokenArray.push(token)
-      })
-      tokenizer.tokens[string] = tokenArray
-    }
-    return tokenArray.slice()
+function Tokenizer(options) {
+  this.options = options
+  if (options !== undefined) {
+    this.sourceRegexp = options.global.tokenizer.source
+    this.targetRegexp = options.global.tokenizer.target
   }
+  this.tokens = {}
 }
-exports = module.exports = tokenizer
+
+Tokenizer.prototype.tokenizeBySpace = function(string) {
+  string = string.trim()
+  if (string === '') return []
+  return string.split(' ')
+}
+
+Tokenizer.prototype.tokenizeSource = function(string) {
+  return this.tokenize(string, this.sourceRegexp)
+}
+
+Tokenizer.prototype.tokenizeTarget = function(string) {
+  return this.tokenize(string, this.targetRegexp)
+}
+
+Tokenizer.prototype.tokenize = function(string, regexp) {
+  if (typeof string !== 'string') throw 'tokenizer.tokenize() string is not String: ' + string
+  if (typeof regexp[0] !== 'string') throw 'tokenizer.tokenize() regexp[0] is not String: ' + regexp
+  var key = string + '-' + regexp.join('-')
+  var tokenArray = this.tokens[key]
+  if (tokenArray === undefined || tokenArray.length === 0) {
+    tokenArray = [];
+    var regexp = XRegExp(regexp[0], regexp[1])
+    var _tokens = string.split(regexp)
+    _tokens.forEach(function(token) {
+      token.trim()
+      if (token.length > 0) tokenArray.push(token)
+    })
+    this.tokens[key] = tokenArray
+  }
+  return tokenArray.slice()
+}
+
+exports = module.exports = Tokenizer

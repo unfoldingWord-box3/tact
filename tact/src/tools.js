@@ -1,4 +1,3 @@
-var tokenizer = require('./tokenizer.js')
 
 var tools = {
 
@@ -39,13 +38,13 @@ var tools = {
     return intersection
   },
 
-  getIndicesOf: function(phrase, string, regexpTokenizer) {
+  getIndicesOf: function(phrase, string) {
     if (typeof phrase !== 'string') throw 'tools.getIndicesOf(phrase) phrase is not String: ' + phrase
     if (typeof string !== 'string') throw 'tools.getIndicesOf(string) string is not String: ' + string
     var phraseLength = phrase.length
     if (phraseLength == 0) return []
     var startIndex = 0, index, indices = []
-    while ((index = tokenizer.tokenize(string, regexpTokenizer).join(' ').indexOf(phrase, startIndex)) > -1) {
+    while ((index = string.indexOf(phrase, startIndex)) > -1) {
         indices.push(index);
         startIndex = index + phraseLength;
     }

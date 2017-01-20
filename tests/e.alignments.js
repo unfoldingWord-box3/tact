@@ -3,6 +3,8 @@ var assert = chai.assert
 var tact = require('./../tact/tact.js')
 var options = require('config').Client
 
+var tokenizer = new tact.Tokenizer(options)
+
 function reverse(s) {
   return s.split('').reverse().join('')
 }
@@ -76,7 +78,7 @@ describe('Alignments', function() {
   it('align() should return an array for each source word', function(done) {
     var alignmentPair = ['taco world', 'ocat dlrow']
     var alignments = new tact.Alignments(options)
-    var tokens = tact.tokenizer.tokenizeSource(alignmentPair[0])
+    var tokens = tokenizer.tokenizeSource(alignmentPair[0])
     var count = tokens.length
     alignments.align(alignmentPair, null, function(orderedAlignment) {
       assert.equal(orderedAlignment.length, count)

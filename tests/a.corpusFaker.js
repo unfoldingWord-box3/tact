@@ -2,7 +2,6 @@
 var chai = require('chai')
 var assert = chai.assert
 var corpusFaker = require('./../tact/src/corpusFaker.js')
-var tokenizer = require('./../tact/src/tokenizer.js')
 var options = require('config').Client
 
 describe('corpusFaker.random', function() {
@@ -49,7 +48,7 @@ describe('corpusFaker.randomPhrase', function() {
   it('randomPhrase should return a string with the number of words less than number passed in.', function() {
     var string = corpusFaker.randomPhrase(3,3);
     assert.isString(string);
-    var tokens = tokenizer.tokenize(string, options.global.tokenizer.source);
+    var tokens = string.split(' ');
     assert.isAtLeast(tokens.length, 1);
     assert.isAtMost(tokens.length, 3);
   });

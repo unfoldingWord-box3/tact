@@ -1,4 +1,4 @@
-
+var Tokenizer = require('./tokenizer.js')
 var async = require('async')
 
 var corpus = {
@@ -11,11 +11,16 @@ var corpus = {
     callback(null, lines)
   },
 
-  pivot: function(sources, targets, callback) {
+  pivot: function(options, sources, targets, callback) {
     var _corpus = []
+    var tokenizer = new Tokenizer(options)
     sources.forEach(function(sourceString, index) {
       var targetString = targets[index]
-      _corpus.push([sourceString.normalize('NFKC').toLowerCase(), targetString.normalize('NFKC').toLowerCase()])
+      var trainingPair = [
+        tokenizer.tokenizeSource(sourceString).join(' ').normalize('NFKC').toLowerCase(),
+        tokenizer.tokenizeTarget(targetString).join(' ').normalize('NFKC').toLowerCase()
+      ]
+      _corpus.push(trainingPair)
     })
     callback(_corpus)
   },

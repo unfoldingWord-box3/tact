@@ -1,6 +1,6 @@
 var tools = require('./tools.js')
 var Table = require('./table.js')
-var tokenizer = require('./tokenizer.js')
+var Tokenizer = require('./tokenizer.js')
 
 function CorrectionsTable(options) {
   this.options = options
@@ -8,6 +8,7 @@ function CorrectionsTable(options) {
   this.table = new Table(this.tableName, this.options)
   this.sourceIndex = {}
   this.targetIndex = {}
+  this.tokenizer = new Tokenizer(options)
 }
 
 CorrectionsTable.prototype.prune = function(alignmentPair, callback) {
@@ -20,7 +21,7 @@ CorrectionsTable.prototype.getBySource = function(sourcePhrase, callback) {
 
 CorrectionsTable.prototype.append = function(pair, index) {
   var source = pair[0], target = pair[1]
-  var sourceWords = tokenizer.tokenizeSource(source)
+  var sourceWords = this.tokenizer.tokenizeSource(source)
   var that = this
   sourceWords.forEach(function(sourceWord, _index) {
     if (that.sourceIndex[sourceWord] === undefined) {
@@ -28,7 +29,7 @@ CorrectionsTable.prototype.append = function(pair, index) {
     }
     that.sourceIndex[sourceWord].push(index)
   })
-  var targetWords = tokenizer.tokenizeTarget(target)
+  var targetWords = this.tokenizer.tokenizeTarget(target)
   targetWords.forEach(function(targetWord, _index) {
     if (that.targetIndex[targetWord] === undefined) {
       that.targetIndex[targetWord] = []
