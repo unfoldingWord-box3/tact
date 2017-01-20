@@ -140,11 +140,12 @@ Alignment.prototype.uniquenessScore = function() {
 }
 // favor phrases over words
 Alignment.prototype.ngramScore = function(alignmentPair) {
+  var that = this
   var ngramScore // response
   var sourceNgramCount = this.sourceTokens.length
   var targetNgramCount = this.targetTokens.length
   if (sourceNgramCount === 0 || targetNgramCount === 0) {
-    ngramScore = 0.8
+    ngramScore = that.options.align.blankScores.ngram
   } else {
     if (this.isCorrection) {
       var deltaNgramMax = Math.abs(this.options.global.ngram.source - sourceNgramCount)
@@ -165,7 +166,7 @@ Alignment.prototype.ngramScore = function(alignmentPair) {
 Alignment.prototype.phraseCountScore = function(alignmentPair, verbose) {
   var that = this
   var sourceString = alignmentPair[0], targetString = alignmentPair[1]
-  if (that.source === ' ' || that.target === ' ') return 0.8
+  if (that.source === ' ' || that.target === ' ') return that.options.align.blankScores.phraseCount
   var sourceMatchCount = tools.match(that.source, sourceString).length
   var targetMatchCount = tools.match(that.target, targetString).length
   var deltaCount = Math.abs(sourceMatchCount - targetMatchCount)
@@ -176,8 +177,8 @@ Alignment.prototype.phraseCountScore = function(alignmentPair, verbose) {
 Alignment.prototype.wordOrderScore = function(alignmentPair) {
   var that = this
   var sourceString = alignmentPair[0], targetString = alignmentPair[1]
-  if (that.source === ' ' || that.target === ' ') return 0.8
-  if (targetString === ' ' || sourceString === ' ') return 0.8
+  if (that.source === ' ' || that.target === ' ') return that.options.align.blankScores.wordOrder
+  if (targetString === ' ' || sourceString === ' ') return that.options.align.blankScores.wordOrder
   var sourceIndices = tools.getIndicesOf(that.source, sourceString)
   var targetIndices = tools.getIndicesOf(that.target, targetString)
   sourceIndices = [sourceIndices[0], sourceIndices[sourceIndices.length-1]]
@@ -197,7 +198,7 @@ Alignment.prototype.wordOrderScore = function(alignmentPair) {
 //favor words/ngrams around the same length relative to their language length
 Alignment.prototype.sizeDeltaScore = function() {
   var that = this
-  if (that.target === ' ') return 0.8
+  if (that.target === ' ') return that.options.align.blankScores.sizeDelta
   var sourceSize = that.source.length
   var targetSize = that.target.length
   var maxSize = Math.max(sourceSize, targetSize)

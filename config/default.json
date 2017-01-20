@@ -39,6 +39,12 @@
       "corrections": {
         "ngramMultiplier": 10
       },
+      "blankScores": {
+        "phraseCount": 0.8,
+        "wordOrder": 0.8,
+        "sizeDelta": 0.8,
+        "ngram": 0.8
+      },
       "staticScoreRatios": {
         "phraseCount": 0.5,
         "wordOrder": 0.5,
