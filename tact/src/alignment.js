@@ -272,9 +272,11 @@ Alignment.prototype.score = function(alignmentPair) {
     that.options.align.weights.sizeDelta * that.scores.sizeDelta
   ) / that.weightSum
 
-  that.confidence = that.scores.isPhrase * that.confidence
+  if (that.options.align.features.isPhrase) {
+    that.confidence = that.scores.isPhrase * that.confidence
+  }
 
-  if (that.isCorrection == true) {
+  if (that.isCorrection) {
     that.confidence = that.confidence + that.options.align.bonus.correction
   }
 

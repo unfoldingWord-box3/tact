@@ -26,7 +26,8 @@
         "ngramPriority": true,
         "phraseCount": true,
         "sizeDelta": true,
-        "penalties": true
+        "penalties": true,
+        "isPhrase": true
       },
       "concurrency": 1,
       "penalties": {
