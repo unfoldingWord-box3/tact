@@ -52,6 +52,11 @@
         "sizeDelta": 0.5,
         "ngram": 0.5
       },
+      "ratios": {
+        "corpus": 2,
+        "local": 3,
+        "global": 1
+      },
       "weights": {
         "ratio": 7,
         "uniqueness": 6,

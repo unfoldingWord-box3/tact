@@ -128,10 +128,10 @@ Alignment.prototype.ratioScore = function() {
   that.ratios.corpus = (that.ratios.corpusSource + that.ratios.corpusTarget) / 2
 
   that.scores.ratio = (
-    that.ratios.local +
-    that.ratios.global +
-    that.ratios.corpus
-  )/3
+    that.options.align.ratios.local * that.ratios.local +
+    that.options.align.ratios.global * that.ratios.global +
+    that.options.align.ratios.corpus * that.ratios.corpus
+  )/ tools.sum(that.options.align.ratios)
   if (Number.isNaN(that.scores.ratio) || that.ratios.global === undefined) console.log(that)
 }
 
@@ -142,6 +142,7 @@ Alignment.prototype.uniquenessScore = function() {
   var deltaUniqueness = Math.abs(that.uniqueness.source - that.uniqueness.target)
   deltaUniqueness = Math.min(Math.max(deltaUniqueness, 0), 0.99)
   that.scores.uniqueness = 1.00 - deltaUniqueness // if the delta of uniqueness is great, make score lower, if the delta is small, make score higher
+  that.scores.uniqueness = that.scores.uniqueness * that.isPhraseScore()
 }
 // favor phrases over words
 Alignment.prototype.ngramScore = function(alignmentPair) {

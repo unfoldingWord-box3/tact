@@ -152,7 +152,7 @@ describe('Alignment.ratioScore()', function() {
     assert.equal(alignment.ratios.localSource, 2/3)
     assert.equal(alignment.ratios.globalSource, 2/9)
     assert.isAtLeast(alignment.scores.ratio, alignment.ratios.globalSource)
-    assert.isAtMost(alignment.scores.ratio, alignment.ratios.localSource)
+    assert.isAtMost(alignment.scores.ratio, alignment.ratios.corpusSource)
   })
 })
 
