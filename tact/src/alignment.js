@@ -123,10 +123,15 @@ Alignment.prototype.ratioScore = function() {
   that.ratios.globalTarget = that.totals.tally / that.totals.globalTarget
   that.ratios.global = (that.ratios.globalSource + that.ratios.globalTarget) / 2
 
+  that.ratios.corpusSource = that.totals.tally / that.totals.corpusSource
+  that.ratios.corpusTarget = that.totals.tally / that.totals.corpusTarget
+  that.ratios.corpus = (that.ratios.corpusSource + that.ratios.corpusTarget) / 2
+
   that.scores.ratio = (
     that.ratios.local +
-    that.ratios.global
-  )/2
+    that.ratios.global +
+    that.ratios.corpus
+  )/3
   if (Number.isNaN(that.scores.ratio) || that.ratios.global === undefined) console.log(that)
 }
 

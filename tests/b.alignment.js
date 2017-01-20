@@ -370,6 +370,7 @@ describe('Alignment.score()', function() {
     var alignmentPair = ['a b d c', 'c b a d']
     var alignment = new tact.Alignment(options, 'a', 'b', false, true)
     alignment.addTally(2)
+    alignment.addCorpusTotals(2,2)
     alignment.addLocalTotals(3,3)
     alignment.addGlobalTotals(9,9)
     alignment.score(alignmentPair)
@@ -377,6 +378,7 @@ describe('Alignment.score()', function() {
     assert.isAtMost(alignment.confidence, 1)
     var alignment = new tact.Alignment(options, 'a b d', 'b a d', false, true)
     alignment.addTally(2)
+    alignment.addCorpusTotals(2,2)
     alignment.addLocalTotals(3,3)
     alignment.addGlobalTotals(9,9)
     alignment.score(alignmentPair)
