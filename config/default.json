@@ -6,6 +6,10 @@
       },
       "sourceLanguage": "greek",
       "targetLanguage": "english",
+      "tokenizer": {
+        "source": ["[^\\pL\\pM]+?","g"],
+        "target": ["[^\\pL\\pM]+?","g"]
+      },
       "ngram": {
         "source": 2,
         "target": 3
@@ -22,7 +26,8 @@
         "ngramPriority": true,
         "phraseCount": true,
         "sizeDelta": true,
-        "penalties": true
+        "penalties": true,
+        "isPhrase": true
       },
       "concurrency": 1,
       "penalties": {
@@ -35,11 +40,22 @@
       "corrections": {
         "ngramMultiplier": 10
       },
+      "blankScores": {
+        "phraseCount": 0.8,
+        "wordOrder": 0.8,
+        "sizeDelta": 0.8,
+        "ngram": 0.8
+      },
       "staticScoreRatios": {
         "phraseCount": 0.5,
         "wordOrder": 0.5,
         "sizeDelta": 0.5,
         "ngram": 0.5
+      },
+      "ratios": {
+        "corpus": 2,
+        "local": 3,
+        "global": 1
       },
       "weights": {
         "ratio": 7,

@@ -1,6 +1,6 @@
 var tools = require('./tools.js')
 var ngram = require('./ngram.js')
-var tokenizer = require('./tokenizer.js')
+var Tokenizer = require('./tokenizer.js')
 
 function Alignment(options, source, target, isCorrection, isAlignment) {
   if (options.constructor !== Object) throw 'Alignment() options is not Object: ' + options
@@ -8,8 +8,9 @@ function Alignment(options, source, target, isCorrection, isAlignment) {
   if (typeof target !== 'string') throw 'Alignment(target) target is not String: ' + target
   this.source = source
   this.target = target
-  this.sourceTokens = tokenizer.tokenize(this.source)
-  this.targetTokens = tokenizer.tokenize(this.target)
+  this.tokenizer = new Tokenizer(options)
+  this.sourceTokens = this.tokenizer.tokenizeSource(this.source)
+  this.targetTokens = this.tokenizer.tokenizeTarget(this.target)
   this.regexSource = new RegExp('(^|\\s)('+this.source+')(?=\\s|$)', 'g')
   this.regexTarget = new RegExp('(^|\\s)('+this.target+')(?=\\s|$)', 'g')
   this.options = options
@@ -122,10 +123,15 @@ Alignment.prototype.ratioScore = function() {
   that.ratios.globalTarget = that.totals.tally / that.totals.globalTarget
   that.ratios.global = (that.ratios.globalSource + that.ratios.globalTarget) / 2
 
+  that.ratios.corpusSource = that.totals.tally / that.totals.corpusSource
+  that.ratios.corpusTarget = that.totals.tally / that.totals.corpusTarget
+  that.ratios.corpus = (that.ratios.corpusSource + that.ratios.corpusTarget) / 2
+
   that.scores.ratio = (
-    that.ratios.local +
-    that.ratios.global
-  )/2
+    that.options.align.ratios.local * that.ratios.local +
+    that.options.align.ratios.global * that.ratios.global +
+    that.options.align.ratios.corpus * that.ratios.corpus
+  )/ tools.sum(that.options.align.ratios)
   if (Number.isNaN(that.scores.ratio) || that.ratios.global === undefined) console.log(that)
 }
 
@@ -136,24 +142,26 @@ Alignment.prototype.uniquenessScore = function() {
   var deltaUniqueness = Math.abs(that.uniqueness.source - that.uniqueness.target)
   deltaUniqueness = Math.min(Math.max(deltaUniqueness, 0), 0.99)
   that.scores.uniqueness = 1.00 - deltaUniqueness // if the delta of uniqueness is great, make score lower, if the delta is small, make score higher
+  that.scores.uniqueness = that.scores.uniqueness * that.isPhraseScore()
 }
 // favor phrases over words
 Alignment.prototype.ngramScore = function(alignmentPair) {
+  var that = this
   var ngramScore // response
   var sourceNgramCount = this.sourceTokens.length
   var targetNgramCount = this.targetTokens.length
   if (sourceNgramCount === 0 || targetNgramCount === 0) {
-    ngramScore = 0.8
+    ngramScore = that.options.align.blankScores.ngram
   } else {
     if (this.isCorrection) {
       var deltaNgramMax = Math.abs(this.options.global.ngram.source - sourceNgramCount)
       ngramScore = 1/(deltaNgramMax+1)
     } else {
       if (alignmentPair[1] === undefined) alignmentPair[1] = ''
-      var sourceStringNgramCount = tokenizer.tokenize(alignmentPair[0]).length
-      var targetStringNgramCount = tokenizer.tokenize(alignmentPair[1]).length
-      var sourceNgramRatio = sourceNgramCount / sourceStringNgramCount
-      var targetNgramRatio = targetNgramCount / targetStringNgramCount
+      var sourceStringTokenCount = alignmentPair[0].split(' ').length
+      var targetStringTokenCount = alignmentPair[1].split(' ').length
+      var sourceNgramRatio = sourceNgramCount / sourceStringTokenCount
+      var targetNgramRatio = targetNgramCount / targetStringTokenCount
       var deltaNgramRatio =  Math.abs(sourceNgramRatio - targetNgramRatio)
       ngramScore = Math.pow( (1.00 - deltaNgramRatio), 5 )
     }
@@ -164,7 +172,7 @@ Alignment.prototype.ngramScore = function(alignmentPair) {
 Alignment.prototype.phraseCountScore = function(alignmentPair, verbose) {
   var that = this
   var sourceString = alignmentPair[0], targetString = alignmentPair[1]
-  if (that.source === ' ' || that.target === ' ') return 0.8
+  if (that.source === ' ' || that.target === ' ') return that.options.align.blankScores.phraseCount
   var sourceMatchCount = tools.match(that.source, sourceString).length
   var targetMatchCount = tools.match(that.target, targetString).length
   var deltaCount = Math.abs(sourceMatchCount - targetMatchCount)
@@ -175,8 +183,8 @@ Alignment.prototype.phraseCountScore = function(alignmentPair, verbose) {
 Alignment.prototype.wordOrderScore = function(alignmentPair) {
   var that = this
   var sourceString = alignmentPair[0], targetString = alignmentPair[1]
-  if (that.source === ' ' || that.target === ' ') return 0.8
-  if (targetString === ' ' || sourceString === ' ') return 0.8
+  if (that.source === ' ' || that.target === ' ') return that.options.align.blankScores.wordOrder
+  if (targetString === ' ' || sourceString === ' ') return that.options.align.blankScores.wordOrder
   var sourceIndices = tools.getIndicesOf(that.source, sourceString)
   var targetIndices = tools.getIndicesOf(that.target, targetString)
   sourceIndices = [sourceIndices[0], sourceIndices[sourceIndices.length-1]]
@@ -196,7 +204,7 @@ Alignment.prototype.wordOrderScore = function(alignmentPair) {
 //favor words/ngrams around the same length relative to their language length
 Alignment.prototype.sizeDeltaScore = function() {
   var that = this
-  if (that.target === ' ') return 0.8
+  if (that.target === ' ') return that.options.align.blankScores.sizeDelta
   var sourceSize = that.source.length
   var targetSize = that.target.length
   var maxSize = Math.max(sourceSize, targetSize)
@@ -265,9 +273,11 @@ Alignment.prototype.score = function(alignmentPair) {
     that.options.align.weights.sizeDelta * that.scores.sizeDelta
   ) / that.weightSum
 
-  that.confidence = that.scores.isPhrase * that.confidence
+  if (that.options.align.features.isPhrase) {
+    that.confidence = that.scores.isPhrase * that.confidence
+  }
 
-  if (that.isCorrection == true) {
+  if (that.isCorrection) {
     that.confidence = that.confidence + that.options.align.bonus.correction
   }
 

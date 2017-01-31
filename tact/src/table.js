@@ -1,6 +1,6 @@
 var tools = require('./tools.js')
 var ngram = require('./ngram.js')
-var tokenizer = require('./tokenizer.js')
+var Tokenizer = require('./tokenizer.js')
 var async = require('async')
 var DB = require('./db.js')
 var Alignment = require('./alignment.js')
@@ -12,6 +12,7 @@ function Table(tableName, options) {
   this.db = new DB()
   this.namespace = this.options.global.sourceLanguage+'-'+this.options.global.targetLanguage+'-'+this.tableName
   this.table = this.db.table(this.namespace)
+  this.tokenizer = new Tokenizer(options)
 }
 
 Table.prototype.phrases = function(alignmentPair, callback) {
@@ -57,11 +58,12 @@ Table.prototype.store = function(_sourceIndex, _targetIndex, _trainingSet, progr
 
 Table.prototype.dynamicTrain = function(_sourceIndex, _targetIndex, _trainingSet, alignmentPair, callback) {
   var alignments = [] // response
+  var that = this
   if (_trainingSet === null) _trainingSet = []
   if (_trainingSet.length === 0) {
     callback(alignments)
   } else {
-    var sourceWords = tokenizer.tokenize(alignmentPair[0])
+    var sourceWords = this.tokenizer.tokenizeSource(alignmentPair[0])
     var trainingIndices = {}
     sourceWords.forEach(function(sourceWord, i) {
       var indices = _sourceIndex[sourceWord]
@@ -78,7 +80,7 @@ Table.prototype.dynamicTrain = function(_sourceIndex, _targetIndex, _trainingSet
         })
       })
     } else {
-      var targetWords = tokenizer.tokenize(alignmentPair[1])
+      var targetWords = this.tokenizer.tokenizeTarget(alignmentPair[1])
       targetWords.forEach(function(targetWord, i) {
         var indices = _targetIndex[targetWord]
         if (indices !== undefined) {

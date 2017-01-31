@@ -1,8 +1,9 @@
 process.env.SUPPRESS_NO_CONFIG_WARNING = 'y';
 var tact = {
-  tokenizer: require('./src/tokenizer.js'),
+  ngram: require('./src/ngram.js'),
   corpus: require('./src/corpus.js'),
 
+  Tokenizer: require('./src/tokenizer.js'),
   Alignment: require('./src/alignment.js'),
   Table: require('./src/table.js'),
   PhraseTable: require('./src/phraseTable.js'),

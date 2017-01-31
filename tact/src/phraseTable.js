@@ -1,7 +1,7 @@
 var tools = require('./tools.js')
 var ngram = require('./ngram.js')
 var Table = require('./table.js')
-var tokenizer = require('./tokenizer.js')
+var Tokenizer = require('./tokenizer.js')
 
 function PhraseTable(options) {
   this.options = options
@@ -9,6 +9,7 @@ function PhraseTable(options) {
   this.table = new Table(this.tableName, this.options)
   this.sourceIndex = {}
   this.targetIndex = {}
+  this.tokenizer = new Tokenizer(options)
 }
 
 PhraseTable.prototype.prune = function(alignmentPair, callback) {
@@ -21,7 +22,7 @@ PhraseTable.prototype.getBySource = function(source, callback) {
 
 PhraseTable.prototype.append = function(pair, index) {
   var source = pair[0], target = pair[1]
-  var sourceWords = tokenizer.tokenize(source)
+  var sourceWords = this.tokenizer.tokenizeSource(source)
   var that = this
   // sourceWords.push(' ')
   sourceWords.forEach(function(sourceWord, _index) {
@@ -30,7 +31,7 @@ PhraseTable.prototype.append = function(pair, index) {
     }
     that.sourceIndex[sourceWord].push(index)
   })
-  var targetWords = tokenizer.tokenize(target)
+  var targetWords = this.tokenizer.tokenizeTarget(target)
   // targetWords.push(' ')
   targetWords.forEach(function(targetWord, _index) {
     if (that.targetIndex[targetWord] === undefined) {

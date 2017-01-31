@@ -37,9 +37,9 @@
   "homepage": "https://github.com/unfoldingword-dev/tact#readme",
   "devDependencies": {
     "chai": "^3.5.0",
-    "mocha": "^3.0.2",
-    "nodemon": "^1.11.0",
-    "cli": "^1.0.1"
+    "cli": "^1.0.1",
+    "mocha": "^3.2.0",
+    "nodemon": "^1.11.0"
   },
   "dependencies": {
     "async": "^2.0.0",

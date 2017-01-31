@@ -1,4 +1,3 @@
-var tokenizer = require('./tokenizer.js')
 
 var tools = {
 
@@ -45,7 +44,7 @@ var tools = {
     var phraseLength = phrase.length
     if (phraseLength == 0) return []
     var startIndex = 0, index, indices = []
-    while ((index = tokenizer.tokenize(string).join(' ').indexOf(phrase, startIndex)) > -1) {
+    while ((index = string.indexOf(phrase, startIndex)) > -1) {
         indices.push(index);
         startIndex = index + phraseLength;
     }
