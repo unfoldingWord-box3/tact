@@ -9,6 +9,7 @@ Due to the regularly evolving codebase, documentation is limited to high level c
 
 ## Prototype Project: WordMAP
 https://github.com/translationCoreApps/wordMAP
+
 WordMAP is a prototype built based on the same principles as TACT.
 
 ## Approach: Process of elimination
