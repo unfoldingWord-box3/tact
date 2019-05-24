@@ -4,8 +4,12 @@
 ## TACT: Translation Alignment Correction Tool
 Javascript based nlp statistical word/phrase aligner.
 
-## Status: Alpha
+## Status: Alpha / Proof of Concept
 Due to the regularly evolving codebase, documentation is limited to high level concepts and workflow.
+
+## Prototype Project: WordMAP
+https://github.com/translationCoreApps/wordMAP
+WordMAP is a prototype built based on the same principles as TACT.
 
 ## Approach: Process of elimination
 Generate permutations of all possible alignments. Score them based on weighted average of common patterns. Pick the best single option. Remove obvious results it can no longer be. Penalize conflicting remaining results. Pick the next best single result... repeat until all words are aligned. Reorder alignment to original source order.
